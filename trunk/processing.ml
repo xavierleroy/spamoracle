@@ -78,3 +78,4 @@ let test_message db low high txt =
     let att = Attachments.summarize msg in
     if att <> "" then printf "Attachments: %s\n" att
   end
+

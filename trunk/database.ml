@@ -107,3 +107,44 @@ let add_spam db w =
     Hashtbl.add db.f_low_freq w (0, 1)
   end
 
+open Printf
+
+let dump db oc =
+  let dump_entry w (g, s) = fprintf oc "%s %d %d\n" w g s in
+  fprintf oc "SPAMORACLE/1 %d %d\n" db.f_num_good db.f_num_spam;
+  Hashtbl.iter dump_entry db.f_high_freq;
+  Hashtbl.iter dump_entry db.f_low_freq
+
+let split s =
+  try
+    let i = String.index s ' ' in
+    let j = String.index_from s (i + 1) ' ' in
+    (String.sub s 0 i,
+     int_of_string (String.sub s (i + 1) (j - i - 1)),
+     int_of_string (String.sub s (j + 1) (String.length s - j - 1)))
+  with Not_found ->
+    failwith("Database restoration: ill-formed line `"
+             ^ String.escaped s ^ "'")
+
+let restore ic =
+  let db = create 997 in
+  begin try
+    let (w, ng, ns) = split (input_line ic) in
+    if w <> "SPAMORACLE/1"
+    then failwith("Database restoration: wrong version");
+    db.f_num_good <- ng;  
+    db.f_num_spam <- ns
+  with End_of_file ->
+    failwith("Database restoration: first line missing");
+  end;
+  begin try
+    while true do
+      let (w, g, s) = split (input_line ic) in
+      if 2 * g + s >= 5
+      then Hashtbl.add db.f_high_freq w (g, s)
+      else Hashtbl.add db.f_low_freq w (g, s)
+    done
+  with End_of_file ->
+    ()
+  end;
+  db

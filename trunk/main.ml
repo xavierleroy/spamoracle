@@ -118,6 +118,12 @@ let test_command args =
     | [] -> ()
   in parse_args args
 
+let backup_command () =
+  Database.dump (Database.read_full !database_name) stdout
+
+let restore_command () =
+  Database.write_full !database_name (Database.restore stdin)
+
 let rec parse_args_1 = function
   | "-f" :: file :: rem ->
       database_name := file; parse_args_2 rem
@@ -135,18 +141,16 @@ and parse_args_2 = function
       list_command rem
   | "test" :: rem ->
       test_command rem
+  | "backup" :: rem ->
+      backup_command ()
+  | "restore" :: rem ->
+      restore_command ()
   | s :: rem ->
       raise(Usage("Unknown command " ^ s))
   | [] ->
       raise(Usage "")
 
-let main () =
-  try
-    parse_args_1 (List.tl (Array.to_list Sys.argv))
-  with
-  | Usage msg ->
-      eprintf "%s\n" msg;
-      eprintf "\
+let usage_string = "\
 Usage:
   spamoracle [-f db] mark {mailbox}*
   Add 'X-Spam:' headers to messages with result of analysis
@@ -174,8 +178,20 @@ Usage:
   spamoracle [-f db] list {regexp}*
   Dump word statistics in database
     -f <db>      Database to use (default $HOME/.spamoracle.db)
-    {regexp}*    Regular expression for words we are interested in
-";
+    {regexp}*    Regular expressions for words we are interested in
+
+  spamoracle [-f db] backup > database.backup
+  Dump whole database in portable text format on standard output
+
+  spamoracle [-f db] restore < database.backup
+  Restore database from text backup file read from standard input"
+
+let main () =
+  try
+    parse_args_1 (List.tl (Array.to_list Sys.argv))
+  with
+  | Usage msg ->
+      eprintf "%s\n%s\n" msg usage_string;
       exit 2
   | Sys_error msg ->
       eprintf "System error: %s\n" msg

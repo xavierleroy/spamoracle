@@ -33,3 +33,5 @@ val write_full: string -> full -> unit
 val create: int -> full
 val add_good: full -> string -> unit
 val add_spam: full -> string -> unit
+val dump: full -> out_channel -> unit
+val restore: in_channel -> full
