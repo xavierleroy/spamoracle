@@ -12,8 +12,9 @@
 
 (* $Id$ *)
 
-(* Summarize the attachments of a message as one line that can be
-   put in the header of the message.  Allows procmail to filter
-   suspicious attachments without looking at the message body. *)
+(* Processing messages *)
 
-val summarize: Mail.message -> string
+val mark_message : Database.short -> string -> unit
+val record_words : Database.full -> bool -> string -> unit
+val add_message : Database.full -> bool -> bool -> string -> unit
+val test_message : Database.short -> float -> float -> string -> unit
