@@ -14,6 +14,8 @@
 
 (* Word frequency database *)
 
+exception Error of string
+
 type short = {
   s_num_good: int;
   s_num_spam: int;
@@ -32,7 +34,7 @@ let magic = "Mailscrubber0001"
 let check_magic filename ic =
   let buf = String.create (String.length magic) in
   really_input ic buf 0 (String.length magic);
-  if buf <> magic then raise(Sys_error(filename ^ ": bad magic number"))
+  if buf <> magic then raise(Error(filename ^ ": bad magic number"))
 
 type db_chan = {zipped : bool ; ic : in_channel}
 
@@ -45,18 +47,22 @@ let open_db filename =
       zipped = false }
 
 let close_db {zipped = zipped ; ic = ic } =
-  if zipped then begin
-    let _ = Unix.close_process_in ic in
-    ()
-  end else
-    close_in ic
+  if zipped 
+  then ignore(Unix.close_process_in ic)
+  else close_in ic
+
+let marshal_from_channel filename ic =
+  try
+    Marshal.from_channel ic
+  with Failure _ ->
+    raise (Error(filename ^ ": database is corrupted"))
 
 let read_short filename =
   let {ic=ic ; zipped=zipped} as db_ic = open_db filename in
   check_magic filename ic;
   let ng = input_binary_int ic in
   let ns = input_binary_int ic in
-  let freq = Marshal.from_channel ic in
+  let freq = marshal_from_channel filename ic in
   close_db db_ic;
   { s_num_good = ng; s_num_spam = ns; s_freq = freq }
 
@@ -65,8 +71,8 @@ let read_full filename =
   check_magic filename ic;
   let ng = input_binary_int ic in
   let ns = input_binary_int ic in
-  let high_freq = Marshal.from_channel ic in
-  let low_freq = Marshal.from_channel ic in
+  let high_freq = marshal_from_channel filename ic in
+  let low_freq = marshal_from_channel filename ic in
   close_db db_ic;
   { f_num_good = ng; f_num_spam = ns; 
     f_low_freq = low_freq; f_high_freq = high_freq }
@@ -153,19 +159,19 @@ let split s =
      int_of_string (String.sub s (i + 1) (j - i - 1)),
      int_of_string (String.sub s (j + 1) (String.length s - j - 1)))
   with Not_found ->
-    failwith("Database restoration: ill-formed line `"
-             ^ String.escaped s ^ "'")
+    raise(Error("Database restoration: ill-formed line `"
+                ^ String.escaped s ^ "'"))
 
 let restore ic =
   let db = create 997 in
   begin try
     let (w, ng, ns) = split (input_line ic) in
     if w <> "SPAMORACLE/1"
-    then failwith("Database restoration: wrong version");
+    then raise (Error("Database restoration: wrong version"));
     db.f_num_good <- ng;  
     db.f_num_spam <- ns
   with End_of_file ->
-    failwith("Database restoration: first line missing");
+    raise (Error("Database restoration: first line missing"));
   end;
   begin try
     while true do
