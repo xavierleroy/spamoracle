@@ -20,6 +20,9 @@ let mark_message db txt =
       else if r.spam_prob >= 0.8 && r.num_meaningful >= 5 then "yes"
       else "unknown" in
     printf "\nX-Spam: %s; %.2f; %s" verdict r.spam_prob r.explanation;
+    let att = Attachments.summarize m in
+    if att <> "" then
+      printf "\nX-Attachments: %s" att;
     output stdout txt pos_sep (String.length txt - pos_sep)
   with Not_found ->
     print_string txt
@@ -57,5 +60,7 @@ let test_message db low high txt =
     printf "From: %s\n" (header "from:" msg);
     printf "Subject: %s\n" (header "subject:" msg);
     printf "Score: %.2f -- %d\n" r.spam_prob r.num_meaningful;
-    printf "Details: %s\n" r.explanation
+    printf "Details: %s\n" r.explanation;
+    let att = Attachments.summarize msg in
+    if att <> "" then printf "Attachments: %s\n" att
   end
