@@ -8,8 +8,8 @@ open Processing
 exception Usage of string
 
 let database_name =
-  ref (try Filename.concat (Sys.getenv "HOME") ".mailscrubber.db"
-       with Not_found -> ".mailscrubber.db")
+  ref (try Filename.concat (Sys.getenv "HOME") ".spamoracle.db"
+       with Not_found -> ".spamoracle.db")
 
 let mark_command args =
   let db = Database.read_short !database_name in

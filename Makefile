@@ -1,3 +1,16 @@
+### Configuration section
+
+# The laguages you're interested in, besides English
+LANGUAGES=-DFRENCH #-DSPANISH -DITALIAN -DGERMAN
+
+# How to invoke the C preprocessor
+CPP=gcc -E -P $(LANGUAGES) -
+
+# Where to install the binary
+BINDIR=/usr/local/bin/spamoracle
+
+### End of configuration section
+
 OCAMLC=ocamlc -g
 OCAMLLEX=ocamllex
 OCAMLDEP=ocamldep
@@ -10,17 +23,29 @@ BYTELIBS=unix.cma str.cma
 NATOBJS=$(BYTEOBJS:.cmo=.cmx)
 NATLIBS=$(BYTELIBS:.cma=.cmxa)
 
-scrubmail: $(NATOBJS)
-	$(OCAMLOPT) -o scrubmail $(NATLIBS) $(NATOBJS)
+all: spamoracle
+
+install:
+	cp spamoracle $(BINDIR)/spamoracle
+
+spamoracle: $(NATOBJS)
+	$(OCAMLOPT) -o spamoracle $(NATLIBS) $(NATOBJS)
 
 clean::
-	rm -f scrubmail
+	rm -f spamoracle
 
-scrubmail.byte: $(BYTEOBJS)
-	$(OCAMLC) -o scrubmail.byte $(BYTELIBS) $(BYTEOBJS)
+spamoracle.byte: $(BYTEOBJS)
+	$(OCAMLC) -o spamoracle.byte $(BYTELIBS) $(BYTEOBJS)
 
 clean::
-	rm -f scrubmail.byte
+	rm -f spamoracle.byte
+
+wordsplit.mll: wordsplit.mlp
+	$(CPP) < wordsplit.mlp > wordsplit.mll \
+        || { rm -f wordsplit.mll; exit 2; }
+
+clean::
+	rm -f wordsplit.mll
 
 wordsplit.ml: wordsplit.mll
 	$(OCAMLLEX) wordsplit.mll

@@ -17,7 +17,7 @@ pqrstuvwxyz{|}~\127\
 \160¡¢£¤¥¦§¨©ª«¬­®¯\
 °±²³´µ¶·¸¹º»¼½¾¿\
 aaaaaaeceeeeiiii\
-Ðnooooo×ouuuuyps\
+Ðnooooo×ouuuuypß\
 aaaaaaeceeeeiiii\
 ðnooooo÷ouuuuypy"
 
@@ -29,13 +29,26 @@ let normalize s =
 }
 
 
-let word_constituent =
-  ['a'-'z' 'A'-'Z' '0'-'9' '-' '\'' '$' '%'
-   (* The following is for French; 
-      adapt to the languages you're interested in *)
+let word_constituent = [
+   'a'-'z' 'A'-'Z' '0'-'9' '-' '\'' '$' '%'
+#ifdef FRENCH
    '\164' (* Euro *)
    'À' 'Â' 'Ç' 'È' 'É' 'Ê' 'Ë' 'Î' 'Ï' 'Ô' 'Ù' 'Û' 'Ü'
-   'à' 'â' 'ç' 'è' 'é' 'ê' 'ë' 'î' 'ï' 'ô' 'ù' 'û' 'ÿ']
+   'à' 'â' 'ç' 'è' 'é' 'ê' 'ë' 'î' 'ï' 'ô' 'ù' 'û' 'ü' 'ÿ'
+#endif
+#ifdef SPANISH
+   '\164' (* Euro *)
+   'Á' 'É' 'Í' 'Ó' 'Ú' 'Ü' 'Ñ' 'á' 'é' 'í' 'ó' 'ú' 'ü' 'ñ'
+#endif
+#ifdef ITALIAN
+   '\164' (* Euro *)
+   'É' 'Í' 'Ú' 'À' 'È' 'Ò' 'é' 'í' 'ú' 'à' 'è' 'ò'
+#endif
+#ifdef GERMAN
+   '\164' (* Euro *)
+   'Ä' 'Ö' 'Ü' 'ä' 'ö' 'ü' 'ß' 
+#endif
+]  
 
 let uppercase_letter =
   ['A'-'Z']
