@@ -47,5 +47,9 @@ val good_mail_prob : float ref
 val spam_mail_prob : float ref
   (** Spam probability below which mails are classified as spam *)
 
+val summarize_referenced : bool ref
+
+val referenced_header : string ref
+
 val options : (string * Configfile.value) list
   (** List of configurable parameters *)

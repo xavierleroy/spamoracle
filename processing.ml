@@ -42,6 +42,11 @@ let mark_message db txt =
       if att <> "" then
         printf "\n%s: %s" !Config.attachments_header att;
     end;
+    if !Config.summarize_referenced then begin 
+      let refh = Refhosts.summarize () in
+      if refh <> "" then
+        printf "\n%s: %s" !Config.referenced_header refh;
+    end;
     output stdout txt pos_sep (String.length txt - pos_sep)
   with Not_found ->
     print_string txt
@@ -78,6 +83,10 @@ let test_message db low high f txt =
     if !Config.summarize_attachments then begin
       let att = Attachments.summarize msg in
       if att <> "" then printf "Attachments: %s\n" att
+    end;
+    if !Config.summarize_referenced then begin 
+      let refh = Refhosts.summarize () in
+      if refh <> "" then printf "Referenced hosts: %s\n" refh
     end;
     printf "File: %s\n" f;
   end
