@@ -81,7 +81,7 @@ INITIALIZATION:
   file "spammails".  You can also fetch corpus messages from several files:
 
      spamoracle add -v -good goodmails1 ... goodmailsN \
-                       -spam spammails1 ... spammailsK
+                       -spam spammails1 ... spammailsP
 
   To check that the database was built correctly, and familiarize
   yourself with the statistical analysis performed by SpamOracle, 
@@ -230,7 +230,7 @@ USING SPAMORACLE AND PROCMAIL TO FILTER YOUR INCOMING E-MAIL:
     spambox
 
     :0
-    * ^(Content-type:.*|X-Attachments:.*cset="|^Subject:.*=\?)\/(ks_c|gb2312|iso-2|euc-|big5|windows-1251)
+    * ^(Content-type:.*|X-Attachments:.*cset="|^Subject:.*=\?)(ks_c|gb2312|iso-2|euc-|big5|windows-1251)
     spambox
 
   The first rule treats as spam every mail that has a Windows
