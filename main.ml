@@ -34,7 +34,7 @@ let parse_config_file file =
       exit 2
     end
   with Sys_error msg ->
-    eprintf "Cannot reading configuration file %s:\n%s\n" file msg
+    eprintf "Cannot read configuration file %s:\n%s\n" file msg
 
 let mark_command args =
   let db = Database.read_short !Config.database_name in
