@@ -92,7 +92,13 @@ let letter = [
 
 let word_constituent = letter | ['-' '\'']
 
-let stretcher = [' ' '-' '_' '.']
+let stretched_word =
+    letter ' ' letter ' ' letter ' ' letter (' ' letter) *
+  | letter '-' letter '-' letter '-' letter ('-' letter) *
+  | letter '_' letter '_' letter '_' letter ('_' letter) *
+  | letter '.' letter '.' letter '.' letter ('.' letter) *
+  | letter '*' letter '*' letter '*' letter ('*' letter) *
+  | letter '\'' letter '\'' letter '\'' letter ('\'' letter) *
 
 let numeric = ['0'-'9' '.' ',' '$' '%' '\164' (* Euro *)]
 
@@ -119,7 +125,7 @@ let jis_out =
 #endif
 
 rule split = parse
-    letter stretcher letter stretcher letter (stretcher letter) *
+    stretched_word
       { fun action ->
           let s = unstretch (Lexing.lexeme lexbuf) in
           if all_uppercase s then
