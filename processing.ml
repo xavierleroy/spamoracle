@@ -79,3 +79,13 @@ let test_message db low high txt =
     if att <> "" then printf "Attachments: %s\n" att
   end
 
+(* Statistics *)
+
+type message_class = Msg_good | Msg_unknown | Msg_spam
+
+let stat_message db txt =
+  let msg = parse_message txt in
+  let r = rank_message db msg in
+  if r.spam_prob <= 0.2 && r.num_meaningful >= 5 then Msg_good
+  else if r.spam_prob >= 0.8 && r.num_meaningful >= 5 then Msg_spam
+  else Msg_unknown

@@ -118,6 +118,30 @@ let test_command args =
     | [] -> ()
   in parse_args args
 
+let stat_command args =
+  let db = Database.read_short !database_name in
+  let stat_mbox f =
+    let num_msgs = ref 0
+    and num_good = ref 0
+    and num_spam = ref 0
+    and num_unknown = ref 0 in
+    mbox_file_iter f
+      (fun s ->
+        incr num_msgs;
+        match stat_message db s with
+          Msg_good -> incr num_good
+        | Msg_spam -> incr num_spam
+        | Msg_unknown -> incr num_unknown);
+    let percentage a b =
+      100.0 *. float a /. float b in
+    if !num_msgs > 0 then
+      printf "%s: %.2f%% good, %.2f%% unknown, %.2f%% spam\n"
+             f 
+             (percentage !num_good !num_msgs)
+             (percentage !num_unknown !num_msgs)
+             (percentage !num_spam !num_msgs)
+  in List.iter stat_mbox args
+
 let backup_command () =
   Database.dump (Database.read_full !database_name) stdout
 
@@ -141,6 +165,8 @@ and parse_args_2 = function
       list_command rem
   | "test" :: rem ->
       test_command rem
+  | "stat" :: rem ->
+      stat_command rem
   | "backup" :: rem ->
       backup_command ()
   | "restore" :: rem ->
@@ -169,10 +195,14 @@ Usage:
                  If no mailbox given, read single msg from standard input
 
   spamoracle [-f db] test [-min prob] [-max prob] {mailbox}*
-  Analyze messages and print summary of results
+  Analyze messages and print summary of results for each message
     -f <db>      Database to use (default $HOME/.spamoracle.db)
     -min <prob>  Don't print messages with result below <prob>   
     -max <prob>  Don't print messages with result above <prob>   
+    {mailbox}*   Mailboxes containing messages to analyze
+
+  spamoracle [-f db] stat {mailbox}*
+  Analyze messages and print percentages of spam/non-spam for each mailbox
     {mailbox}*   Mailboxes containing messages to analyze
 
   spamoracle [-f db] list {regexp}*
