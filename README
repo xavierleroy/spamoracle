@@ -49,8 +49,10 @@ REQUIREMENTS AND LIMITATIONS:
 
   . The notion of "word" used by SpamOracle is slanted towards Western
     European languages, i.e. the ISO Latin-1 and Latin-9 character sets.
-    SpamOracle will not work well if you receive many legitimate e-mails
-    written in other character sets, such as Eastern Asian languages.
+    Preliminary support for JIS-encoded Japanese is provided.
+    Still, SpamOracle will not work well if you receive many
+    legitimate e-mails written in other character sets, such as
+    Chinese or Korean.
 
 INSTALLATION:
 
@@ -269,11 +271,13 @@ UPDATING THE DATABASE:
 
 TECHNICAL DETAILS:
 
-  SpamOracle's notion of "word" is any run of 3 to 12 of the following
-  characters: letters, digits, single quotes, dashes (-), dollar and
-  percent signs.  If support for non-English european languages was
-  compiled in, word characters also include the relevant accented letters 
-  for the languages in question, plus the Euro sign.  All words are
+  SpamOracle's notion of "word" is the following:
+  - any run of 3 to 12 letters, single quotes, dashes (-)
+  - any run of 3 to 8 digits, dots, commas, dollar, euro and
+    percent signs.
+  If support for non-English european languages was
+  compiled in, letters also include the relevant accented letters 
+  for the languages in question.  All words are
   mapped to lowercase, and accented letters are mapped to the corresponding
   non-accented letters.
 
@@ -302,3 +306,8 @@ TECHNICAL DETAILS:
       spamoracle list 'sex.*'
       spamoracle list 'caml.*'
 
+  It is possible to tweak many of the parameters that govern filtering
+  via the configuration file ~/.spamoracle.conf.  The configurable
+  parameters are listed and explained in the man page spamoracle.conf (5).
+  All parameters have reasonable default values, but you may try
+  to tweak them to get better filtering.

@@ -6,6 +6,8 @@ spamoracle \- a spam classification tool
 .SH SYNOPSIS
 
 .B spamoracle
+.RB [ \-config
+.IR conf ]
 .RB [ \-f
 .IR database ]
 .B mark
@@ -14,6 +16,8 @@ spamoracle \- a spam classification tool
 ]
 
 .B spamoracle
+.RB [ \-config
+.IR conf ]
 .RB [ \-f
 .IR database ]
 .B add
@@ -24,6 +28,8 @@ spamoracle \- a spam classification tool
 .I goodbox ...
 
 .B spamoracle
+.RB [ \-config
+.IR conf ]
 .RB [ \-f
 .IR database ]
 .B test
@@ -36,6 +42,8 @@ spamoracle \- a spam classification tool
 ]
 
 .B spamoracle
+.RB [ \-config
+.IR conf ]
 .RB [ \-f
 .IR database ]
 .B stat
@@ -44,12 +52,16 @@ spamoracle \- a spam classification tool
 ]
 
 .B spamoracle
+.RB [ \-config
+.IR conf ]
 .RB [ \-f
 .IR database ]
 .B list
 .I regexp ...
 
 .B spamoracle
+.RB [ \-config
+.IR conf ]
 .RB [ \-f
 .IR database ]
 .B backup
@@ -57,6 +69,8 @@ spamoracle \- a spam classification tool
 .I backupfile
 
 .B spamoracle
+.RB [ \-config
+.IR conf ]
 .RB [ \-f
 .IR database ]
 .B restore
@@ -122,8 +136,10 @@ supported.
 
 The notion of "word" used by SpamOracle is slanted towards Western
 European languages, i.e. the ISO Latin-1 and Latin-9 character sets.
-SpamOracle will not work well if you receive many legitimate e-mails
-written in other character sets, such as Eastern Asian languages.
+Preliminary support for JIS-encoded Japanese can be selected at
+compile-time.  SpamOracle will not work well if you receive many
+legitimate e-mails written in other character sets, such as Chinese or
+Korean sets.
 
 .SH INITIALIZATION
 
@@ -513,6 +529,35 @@ spamoracle restore < backupfile
 .RE
 .fi
 
+.SH "CONFIGURING FILTERING PARAMETERS"
+
+Many of the parameters that govern message classification can be
+configured via a configuration file.  By default, the configuration
+is read from the file
+.B ".spamoracle.conf"
+in the user's home directory.  A different configuration file can
+be specified on the command line using the
+.B -config
+option:
+.BI "spamoracle -config myconfigfile" " ..."
+
+The list of configurable parameters and the format of the
+configuration file are described in
+.BR spamoracle.conf (5).
+
+All parameters have reasonable defaults, but you can try to improve
+the quality of classification further by tweaking them.  To determine
+the impact of your changes, use either the
+.B test
+or
+.B stat
+commands to
+.BR spamoracle .
+The
+.B spamoracle test
+command prints a one-line summary of how many spam, non-spam, and
+unknown messages were found in the mailboxes given as arguments.
+
 .SH "TECHNICAL DETAILS"
 
 SpamOracle's notion of "word" is any run of 3 to 12 of the following
@@ -576,6 +621,7 @@ Xavier Leroy <Xavier.Leroy@inria.fr>
 
 .SH "SEE ALSO"
 
+.BR spamoracle.conf (5);
 .BR procmail (1);
 .BR fetchmail (1)
 
