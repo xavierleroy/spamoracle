@@ -155,6 +155,18 @@ let stat_command args =
              (percentage !num_spam !num_msgs)
   in List.iter stat_mbox args
 
+let words_command args =
+  if args = [] then
+    wordsplit_message (read_single_msg stdin)
+  else
+    List.iter
+      (fun f ->
+        mbox_file_iter f
+          (fun msg ->
+            print_string "----------------------------------------\n";
+            wordsplit_message msg))
+      args
+
 let backup_command () =
   Database.dump (Database.read_full !Config.database_name) stdout
 
@@ -194,6 +206,8 @@ and parse_args_3 = function
       backup_command ()
   | "restore" :: rem ->
       restore_command ()
+  | "words" :: rem ->
+      words_command rem
   | s :: rem ->
       raise(Usage("Unknown command " ^ s))
   | [] ->
@@ -234,6 +248,11 @@ Usage:
 
   spamoracle [-config conf] [-f db] restore < database.backup
   Restore database from text backup file read from standard input
+
+  spamoracle [-config conf] [-f db] words {mailbox}*
+  Extract words from messages and print them
+    {mailbox}*   Mailboxes containing messages to scan
+                 If no mailbox given, read single msg from standard input
 
   Common options:
     -config <conf> Configuration file (default $HOME/.spamoracle.conf)
