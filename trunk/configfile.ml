@@ -98,4 +98,4 @@ let parse opts filename =
   with End_of_file ->
     close_in ic
   end;
-  !errors
+  List.rev !errors

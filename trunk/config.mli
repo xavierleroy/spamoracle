@@ -14,6 +14,10 @@ val html_tag_attr : Str.regexp ref
 val mail_headers : Str.regexp ref
   (** Regexp matching names of e-mail headers that must be analyzed. *)
 
+val alternative_favor_html : bool ref
+  (** If true, consider only the HTML part of a multipart/alternative.
+      Otherwise, consider all parts. *)
+
 val spam_header : string ref
   (** Name of header added with spam / not-spam info (default: "X-Spam") *)
 

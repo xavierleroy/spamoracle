@@ -187,6 +187,8 @@ let re_content_html =
   Str.regexp_case_fold "text/html"
 let re_content_message_rfc822 =
   Str.regexp_case_fold "message/rfc822"
+let re_content_alternative =
+  Str.regexp_case_fold "multipart/alternative"
 let re_content_multipart =
   Str.regexp_case_fold "multipart/"
 
@@ -196,7 +198,15 @@ let rec iter_text_parts fn m =
     fn m
   else if header_matches "content-type:" re_content_html m then
     fn {m with body = Htmlscan.extract_text m.body}
-  else if header_matches "content-type:" re_content_multipart m then begin
+  else if header_matches "content-type:" re_content_alternative m then begin
+    try
+      if not !Config.alternative_favor_html then raise Not_found;
+      iter_text_parts fn 
+        (List.find (header_matches "content-type:" re_content_html) m.parts)
+    with Not_found ->
+      fn m;
+      List.iter (iter_text_parts fn) m.parts
+  end else if header_matches "content-type:" re_content_multipart m then begin
     fn m;
     List.iter (iter_text_parts fn) m.parts
   end else if header_matches "content-type:" re_content_message_rfc822 m then

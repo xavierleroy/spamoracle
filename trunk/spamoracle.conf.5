@@ -20,7 +20,7 @@ flag to
 most of the configuration parameters should not be modified lightly,
 as this may result in completely wrong e-mail classification.  
 Familiarity with Graham's filtering algorithm, as described in the
-paper referenced at the end of this page, is required to really
+paper referenced at the end of this page, is recommended to fully
 understand the effect of the parameters.
 
 .SH SYNTAX
@@ -31,19 +31,19 @@ file is composed of lines of the form
 .I variable
 .B =
 .IR value .
-Lines starting with a hash sign (#) are treated as comments and ignored.
+Lines starting with a # sign are treated as comments and ignored.
 Blank lines are ignored.
 
 Depending on the type of the variable (see the list of variables below), the
 .I value 
-part is of the following forms:
+part takes one of the following forms:
 .TP
 .I string
 A sequence of characters.  Blanks (spaces, tabs) at the beginning and the
 end of the string are ignored.  Alternatively, the string can be
 enclosed in double quotes ("), in which case spaces are not trimmed.
-Inside quoted strings, blackslashes (\) and double quotes (") must be
-escaped with a backslash, as in \\ or \"
+Inside quoted strings, blackslashes (\\) and double quotes (") must be
+escaped with a backslash, as in \\\\ or \\\"
 .TP
 .I boolean
 Either
@@ -142,6 +142,17 @@ default value
 .br
 A regular expression determining which headers of an e-mail message
 are scanned for words.
+.TP
+.B alternative_favor_html
+(type
+.IR bool ,
+default value
+.BR true )
+.br
+Determine how multipart/alternative messages are treated.  If this
+parameter is set, and one part of the alternative is of type text/html,
+this part is scanned and all other parts are ignored.  In all other
+cases, all parts of the alternative are scanned.
 .TP
 .B spam_header
 (type

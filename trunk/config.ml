@@ -12,6 +12,8 @@ let html_tag_attr = ref (Str.regexp_case_fold
 let mail_headers = ref (Str.regexp_case_fold
   "from:\\|subject:")
 
+let alternative_favor_html = ref true
+
 let spam_header = ref "X-Spam"
 
 let attachments_header = ref "X-Attachments"
@@ -37,6 +39,7 @@ let options = [
   "html_retain_tags", Bool html_add_tags;
   "html_tag_attributes", Regexp html_tag_attr;
   "mail_headers", Regexp mail_headers;
+  "alternative_favor_html", Bool alternative_favor_html;
   "spam_header", String spam_header;
   "attachments_header", String attachments_header;
   "summarize_attachments", Bool summarize_attachments;
