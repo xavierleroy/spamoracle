@@ -26,7 +26,7 @@ let trim_spaces s =
   let i = ref (String.length s - 1) in
   while !i >= 0 && (let c = s.[!i] in c = ' ' || c = '\t' || c = '\r')
   do decr i done;
-  String.sub s 0 !i
+  String.sub s 0 (!i + 1)
 
 let parse_string data =
   try
