@@ -40,6 +40,19 @@ let normalize s =
     s.[i] <- tbl.[Char.code s.[i]]
   done
 
+let all_uppercase s =
+  try
+    for i = 0 to String.length s - 1 do
+      let c = s.[i] in
+      if (c >= 'A' && c <= 'Z')
+      || (c >= '\192' && c <= '\214')
+      || (c >= '\216' && c <= '\222')
+      then ()
+      else raise Exit
+    done;
+    true
+  with Exit ->
+    false
 }
 
 
@@ -64,22 +77,14 @@ let word_constituent = [
 #endif
 ]  
 
-let uppercase_letter =
-  ['A'-'Z']
-
-let weird_character =
-  ['\127' - '\255']
+let weird_character = ['\127' - '\255']
 
 rule split = parse
-    uppercase_letter uppercase_letter uppercase_letter uppercase_letter *
+    word_constituent word_constituent word_constituent word_constituent *
       { fun action ->
           let s = Lexing.lexeme lexbuf in
-          action ("U" ^ string_of_int (String.length s));
-          if String.length s <= 12 then (normalize s; action s);
-          split lexbuf action }
-  | word_constituent word_constituent word_constituent word_constituent *
-      { fun action ->
-          let s = Lexing.lexeme lexbuf in
+          if all_uppercase s then
+            action ("U" ^ string_of_int (String.length s));
           if String.length s <= 12 then (normalize s; action s);
           split lexbuf action }
   | weird_character weird_character weird_character weird_character *
