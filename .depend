@@ -1,0 +1,15 @@
+database.cmo: database.cmi 
+database.cmx: database.cmi 
+mail.cmo: mail.cmi 
+mail.cmx: mail.cmi 
+main.cmo: database.cmi mbox.cmi processing.cmo 
+main.cmx: database.cmx mbox.cmx processing.cmx 
+mbox.cmo: mbox.cmi 
+mbox.cmx: mbox.cmi 
+processing.cmo: database.cmi mail.cmi rankmsg.cmi wordsplit.cmi 
+processing.cmx: database.cmx mail.cmx rankmsg.cmx wordsplit.cmx 
+rankmsg.cmo: database.cmi mail.cmi wordsplit.cmi rankmsg.cmi 
+rankmsg.cmx: database.cmx mail.cmx wordsplit.cmx rankmsg.cmi 
+wordsplit.cmo: wordsplit.cmi 
+wordsplit.cmx: wordsplit.cmi 
+rankmsg.cmi: database.cmi mail.cmi 
