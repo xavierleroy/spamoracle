@@ -1,5 +1,6 @@
 Release 1.4:
 - More lenient rule for ignoring HTML comments.
+- Recognition of S P A C E D  O-U-T words.
 - Fixed a bug causing certain text-only e-mails to be ignored.
 - Improved the "spamoracle test" command.
 - Added "spamoracle words" command for troubleshooting the word-splitting
