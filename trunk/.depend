@@ -15,11 +15,15 @@ main.cmx: config.cmx configfile.cmx database.cmx mbox.cmx processing.cmx
 mbox.cmo: mbox.cmi 
 mbox.cmx: mbox.cmi 
 processing.cmo: attachments.cmi config.cmi database.cmi mail.cmi rankmsg.cmi \
-    wordsplit.cmi processing.cmi 
+    refhosts.cmi wordsplit.cmi processing.cmi 
 processing.cmx: attachments.cmx config.cmx database.cmx mail.cmx rankmsg.cmx \
-    wordsplit.cmx processing.cmi 
-rankmsg.cmo: config.cmi database.cmi mail.cmi wordsplit.cmi rankmsg.cmi 
-rankmsg.cmx: config.cmx database.cmx mail.cmx wordsplit.cmx rankmsg.cmi 
+    refhosts.cmx wordsplit.cmx processing.cmi 
+rankmsg.cmo: config.cmi database.cmi mail.cmi refhosts.cmi wordsplit.cmi \
+    rankmsg.cmi 
+rankmsg.cmx: config.cmx database.cmx mail.cmx refhosts.cmx wordsplit.cmx \
+    rankmsg.cmi 
+refhosts.cmo: refhosts.cmi 
+refhosts.cmx: refhosts.cmi 
 testsplit.cmo: mail.cmi mbox.cmi wordsplit.cmi 
 testsplit.cmx: mail.cmx mbox.cmx wordsplit.cmx 
 wordsplit.cmo: wordsplit.cmi 

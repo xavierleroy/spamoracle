@@ -21,7 +21,7 @@ OCAMLOPT=ocamlopt
 
 BYTEOBJS=configfile.cmo config.cmo \
   htmlscan.cmo mail.cmo database.cmo mbox.cmo wordsplit.cmo \
-  rankmsg.cmo attachments.cmo processing.cmo main.cmo
+  refhosts.cmo rankmsg.cmo attachments.cmo processing.cmo main.cmo
 BYTELIBS=unix.cma str.cma
 
 NATOBJS=$(BYTEOBJS:.cmo=.cmx)

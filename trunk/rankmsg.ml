@@ -57,7 +57,8 @@ let process_word (db, res) w =
     ()
 
 let process_words ctx txt =
-  Wordsplit.iter (process_word ctx) txt
+  Wordsplit.iter (process_word ctx) txt;
+  if !Config.summarize_referenced then Refhosts.add txt
 
 let process_msg ctx m =
   iter_message (process_words ctx) m
@@ -74,6 +75,7 @@ type rank =
     explanation: string }
 
 let rank_message db msg =
+  Refhosts.reset();
   let res = Array.make !Config.num_words_retained ("", 0.5) in
   process_msg (db, res) msg;
   let p = bayes_rule res in

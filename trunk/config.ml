@@ -32,6 +32,10 @@ let spam_mail_prob = ref 0.8
 
 let min_meaningful_words = ref 5
 
+let summarize_referenced = ref false
+
+let referenced_header = ref "X-Referenced-Hosts"
+
 open Configfile
 
 let options = [
@@ -43,6 +47,8 @@ let options = [
   "spam_header", String spam_header;
   "attachments_header", String attachments_header;
   "summarize_attachments", Bool summarize_attachments;
+  "referenced_header", String referenced_header;
+  "summarize_referenced", Bool summarize_referenced;
   "num_meaningful_words", Int num_words_retained;
   "max_repetitions", Int max_repetitions;
   "low_freq_limit", Float low_freq_limit;
