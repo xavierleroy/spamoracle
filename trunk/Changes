@@ -1,8 +1,12 @@
 Release 1.3:
-- Added manual page.
 - Better scanning of words in HTML documents.
 - Better handling of multipart documents; now scan both text and HTML
   parts of a multipart/alternative.
+- Support for Portuguese and Japanese (JIS encoding)
+- Added configuration file (~/.spamoracle.conf) to allow twiddling
+  with filtering parameters.
+- Handles gzipped databases.
+- Added manual pages.
 
 Release 1.2:
 - When choosing part of a multipart/alternative, ignore pure text part
