@@ -126,7 +126,7 @@ let test_command args =
     | "-max" :: [] ->
         raise(Usage("no argument to -max"))
     | f :: rem ->
-        mbox_file_iter f (test_message db !low !high);
+        mbox_file_iter f (test_message db !low !high f);
         parse_args rem
     | [] -> ()
   in parse_args args

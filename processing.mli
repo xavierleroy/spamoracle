@@ -17,6 +17,6 @@
 val mark_message : Database.short -> string -> unit
 val record_words : Database.full -> bool -> string -> unit
 val add_message : Database.full -> bool -> bool -> string -> unit
-val test_message : Database.short -> float -> float -> string -> unit
+val test_message : Database.short -> float -> float -> string -> string -> unit
 type message_class = Msg_good | Msg_unknown | Msg_spam
 val stat_message : Database.short -> string -> message_class

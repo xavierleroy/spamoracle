@@ -66,7 +66,7 @@ let add_message db verbose is_spam msg =
 
 (* Test analysis on a message *)
 
-let test_message db low high txt =
+let test_message db low high f txt =
   let msg = parse_message txt in
   let r = rank_message db msg in
   if r.spam_prob >= low && r.spam_prob <= high then begin
@@ -78,7 +78,8 @@ let test_message db low high txt =
     if !Config.summarize_attachments then begin
       let att = Attachments.summarize msg in
       if att <> "" then printf "Attachments: %s\n" att
-    end
+    end;
+    printf "File: %s\n" f;
   end
 
 (* Statistics *)

@@ -20,6 +20,8 @@ processing.cmx: attachments.cmx config.cmx database.cmx mail.cmx rankmsg.cmx \
     wordsplit.cmx processing.cmi 
 rankmsg.cmo: config.cmi database.cmi mail.cmi wordsplit.cmi rankmsg.cmi 
 rankmsg.cmx: config.cmx database.cmx mail.cmx wordsplit.cmx rankmsg.cmi 
+testsplit.cmo: mail.cmi mbox.cmi wordsplit.cmi 
+testsplit.cmx: mail.cmx mbox.cmx wordsplit.cmx 
 wordsplit.cmo: wordsplit.cmi 
 wordsplit.cmx: wordsplit.cmi 
 attachments.cmi: mail.cmi 
