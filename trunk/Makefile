@@ -9,6 +9,10 @@ CPP=gcc -E -P $(LANGUAGES) -
 # Where to install the binary
 BINDIR=/usr/local/bin
 
+# Where to install the man page
+MANEXT=1
+MANDIR=/usr/local/man/man$(MANEXT)
+
 ### End of configuration section
 
 OCAMLC=ocamlc -g
@@ -16,8 +20,8 @@ OCAMLLEX=ocamllex
 OCAMLDEP=ocamldep
 OCAMLOPT=ocamlopt
 
-BYTEOBJS=mail.cmo database.cmo mbox.cmo wordsplit.cmo rankmsg.cmo \
-  attachments.cmo processing.cmo main.cmo
+BYTEOBJS=htmlscan.cmo mail.cmo database.cmo mbox.cmo wordsplit.cmo \
+  rankmsg.cmo attachments.cmo processing.cmo main.cmo
 BYTELIBS=unix.cma str.cma
 
 NATOBJS=$(BYTEOBJS:.cmo=.cmx)
@@ -27,6 +31,7 @@ all: spamoracle
 
 install:
 	cp spamoracle $(BINDIR)/spamoracle
+	cp spamoracle.1 $(MANDIR)/spamoracle.$(MANEXT)
 
 spamoracle: $(NATOBJS)
 	$(OCAMLOPT) -o spamoracle $(NATLIBS) $(NATOBJS)
@@ -54,6 +59,14 @@ clean::
 	rm -f wordsplit.ml
 
 beforedepend:: wordsplit.ml
+
+htmlscan.ml: htmlscan.mll
+	$(OCAMLLEX) htmlscan.mll
+
+clean::
+	rm -f htmlscan.ml
+
+beforedepend:: htmlscan.ml
 
 clean::
 	rm -f *.cm[iox] *.o

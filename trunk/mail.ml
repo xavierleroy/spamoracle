@@ -170,57 +170,36 @@ let rec parse_message s =
       parts = [] }
 
 let header s msg =
-  try List.assoc s msg.headers with Not_found -> ""
+  let rec hdr = function
+    [] -> []
+  | (h,v) :: rem -> if h = s then v :: hdr rem else hdr rem in
+  String.concat "\n" (hdr msg.headers)
 
-let re_content_pure_text =
-  Str.regexp_case_fold "text/plain\\|text$\\|$"
+let header_matches s re msg =
+  let rec hmatch = function
+    [] -> false
+  | (h,v) :: rem -> (h = s && Str.string_match re v 0) || hmatch rem
+  in hmatch msg.headers
+
 let re_content_text =
-  Str.regexp_case_fold "text/plain\\|text/enriched\\|text/html\\|text$\\|$"
-let re_content_multipart_alternative =
-  Str.regexp_case_fold "multipart/alternative"
+  Str.regexp_case_fold "text/plain\\|text/enriched\\|text$"
+let re_content_html =
+  Str.regexp_case_fold "text/html"
+let re_content_message_rfc822 =
+  Str.regexp_case_fold "message/rfc822"
 let re_content_multipart =
   Str.regexp_case_fold "multipart/"
 
-let message_matches re m =
-  let content_type = header "content-type:" m in
-  Str.string_match re content_type 0
-
-let meaningful_text_size_threshold = 200
-
-let choose_in_multipart m =
-  let rec choose pure other = function
-    [] -> (pure, other)
-  | m :: rem ->
-      if message_matches re_content_pure_text m then
-        choose (Some m) other rem
-      else if message_matches re_content_text m then
-        choose pure (Some m) rem
-      else if message_matches re_content_multipart_alternative m then
-        choose pure other (List.rev m.parts @ rem)
-      else
-        choose pure other rem in
-  (* Favor text-only, unless very short
-     (many spams are fake alternatives with nearly empty text part *)
-  match choose None None (List.rev m.parts) with
-    (Some pure, Some other) ->
-      if String.length pure.body >= meaningful_text_size_threshold
-      then Some pure
-      else Some other
-  | (Some pure, _) -> Some pure
-  | (_, Some other) -> Some other
-  | (_, _) -> None
-
 let rec iter_text_parts fn m =
-  let content_type = header "content-type:" m in
-  if Str.string_match re_content_text content_type 0 then
+  if header_matches "content-type:" re_content_text m 
+  || not(List.mem_assoc "content-type:" m.headers) then
     fn m
-  else if Str.string_match re_content_multipart_alternative content_type 0 
-  then begin
-    match choose_in_multipart m with
-      None -> ()
-    | Some m -> fn m
-  end
-  else if Str.string_match re_content_multipart content_type 0 then
+  else if header_matches "content-type:" re_content_html m then
+    fn {m with body = Htmlscan.extract_text m.body}
+  else if header_matches "content-type:" re_content_multipart m then begin
+    fn m;
     List.iter (iter_text_parts fn) m.parts
+  end else if header_matches "content-type:" re_content_message_rfc822 m then
+    iter_text_parts fn (parse_message m.body)
   else
     ()
