@@ -20,3 +20,6 @@ val mbox_file_iter: string -> (string -> unit) -> unit
 val mbox_channel_iter: in_channel -> (string -> unit) -> unit
   (** [mbox_channel_iter ic fn] reads messages from the input channel
       [ic], and applies [fn] in turn to each message. *)
+
+val read_single_msg: in_channel -> string
+  (** Read one message from the given channel, up to end of file *)

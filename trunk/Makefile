@@ -4,7 +4,7 @@ OCAMLDEP=ocamldep
 OCAMLOPT=ocamlopt
 
 BYTEOBJS=mail.cmo database.cmo mbox.cmo wordsplit.cmo rankmsg.cmo \
-  processing.cmo main.cmo
+  attachments.cmo processing.cmo main.cmo
 BYTELIBS=unix.cma str.cma
 
 NATOBJS=$(BYTEOBJS:.cmo=.cmx)

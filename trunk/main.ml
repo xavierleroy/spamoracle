@@ -14,7 +14,7 @@ let database_name =
 let mark_command args =
   let db = Database.read_short !database_name in
   if args = [] then
-    mbox_channel_iter stdin (mark_message db)
+    mark_message db (read_single_msg stdin)
   else
     List.iter (fun f -> mbox_file_iter f (mark_message db)) args
 
@@ -40,7 +40,7 @@ let add_command args =
         parse_args rem
     | [] ->
         if not !processed then
-          mbox_channel_iter stdin (add_message db !verbose !is_spam);
+          add_message db !verbose !is_spam (read_single_msg stdin);
         if !verbose then
           printf "\r%6d / %6d  good / spam messages\n"
                  db.f_num_good db.f_num_spam
@@ -138,7 +138,7 @@ Usage:
   Add 'X-Spam:' headers to messages with result of analysis
     -f <db>      Database to use (default $HOME/.mailscrubber.db)
     {mailbox}*   Mailboxes containing messages to markup
-                 If none given, use standard input
+                 If none given, read single msg from standard input
 
   scrubmail [-f db] add [-v] -spam {spambox}* -good {goodbox}*
   Create or update database with known spam or non-spam messages
@@ -148,7 +148,7 @@ Usage:
     -good        Indicate subsequent mailboxes contain good msgs (not spam)
     {spambox}*   Mailboxes containing spam
     {goodbox}*   Mailboxes containing good messages (not spam)
-                 If no mailbox given, use standard input
+                 If no mailbox given, read single msg from standard input
 
   scrubmail [-f db] test [-min prob] [-max prob] {mailbox}*
   Analyze messages and print summary of results
