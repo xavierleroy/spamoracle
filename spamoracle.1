@@ -38,7 +38,7 @@ spamoracle \- a spam classification tool
 .RB [ \-max
 .IR prob ]
 [
-.I spambox ...
+.I mailbox ...
 ]
 
 .B spamoracle
@@ -48,7 +48,7 @@ spamoracle \- a spam classification tool
 .IR database ]
 .B stat
 [
-.I spambox ...
+.I mailbox ...
 ]
 
 .B spamoracle
@@ -76,6 +76,16 @@ spamoracle \- a spam classification tool
 .B restore
 .B <
 .I backupfile
+
+.B spamoracle
+.RB [ \-config
+.IR conf ]
+.RB [ \-f
+.IR database ]
+.B words
+[
+.I mailbox ...
+]
 
 .SH DESCRIPTION
 
@@ -620,6 +630,12 @@ U5 summer english written french W3
 .LP
 .RE
 .fi
+
+To see the words that are extracted from a message, issue the
+.B spamoracle words
+command.  It reads either a single message from standard input, or all
+messages from the mailbox files given as arguments, decomposes the
+messages into words and prints the words.
 
 .SH RANDOM NOTES
 

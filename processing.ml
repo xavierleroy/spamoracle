@@ -92,3 +92,16 @@ let stat_message db txt =
   if r.spam_prob <= 0.2 && r.num_meaningful >= 5 then Msg_good
   else if r.spam_prob >= 0.8 && r.num_meaningful >= 5 then Msg_spam
   else Msg_unknown
+
+(* Word splitting *)
+
+let wordsplit_message txt =
+  Format.open_hovbox 0;
+  Mail.iter_message
+    (fun txt ->
+      Wordsplit.iter
+        (fun word -> Format.print_string word; Format.print_space())
+        txt)
+    (parse_message txt);
+  Format.close_box();
+  Format.print_newline()
