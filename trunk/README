@@ -1,6 +1,6 @@
                SpamOracle -- a spam classification tool
 
-                        Version 1.0 (alpha)
+                        Version 1.3
 
 OVERVIEW:
 
@@ -24,6 +24,12 @@ OVERVIEW:
   "X-Attachments:" header.  This allows procmail to easily reject
   e-mails containing suspicious attachments, e.g. Windows executables
   which often indicate a virus.
+
+
+LICENSE:
+
+  This program is distributed under the terms of the GPL (GNU Public License)
+  version 2, available from http://www.gnu.org/licenses/gpl.txt.
 
 
 REQUIREMENTS AND LIMITATIONS:
