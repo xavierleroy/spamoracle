@@ -124,7 +124,7 @@ and parse_args_2 = function
   | s :: rem ->
       raise(Usage("Unknown command " ^ s))
   | [] ->
-      mark_command []
+      raise(Usage "")
 
 let main () =
   try
@@ -133,10 +133,34 @@ let main () =
   | Usage msg ->
       eprintf "%s\n" msg;
       eprintf "\
-Usage: scrubmail [-f db] mark {mailbox}*
-       scrubmail [-f db] add [-v] -spam {spambox}* -good {goodbox}*
-       scrubmail [-f db] test [-min prob] [-max prob] {mailbox}*
-       scrubmail [-f db] list {regexp}*
+Usage:
+  scrubmail [-f db] mark {mailbox}*
+  Add 'X-Spam:' headers to messages with result of analysis
+    -f <db>      Database to use (default $HOME/.mailscrubber.db)
+    {mailbox}*   Mailboxes containing messages to markup
+                 If none given, use standard input
+
+  scrubmail [-f db] add [-v] -spam {spambox}* -good {goodbox}*
+  Create or update database with known spam or non-spam messages
+    -f <db>      Database to use (default $HOME/.mailscrubber.db)
+    -v           Print progress bar
+    -spam        Indicate subsequent mailboxes contain spam
+    -good        Indicate subsequent mailboxes contain good msgs (not spam)
+    {spambox}*   Mailboxes containing spam
+    {goodbox}*   Mailboxes containing good messages (not spam)
+                 If no mailbox given, use standard input
+
+  scrubmail [-f db] test [-min prob] [-max prob] {mailbox}*
+  Analyze messages and print summary of results
+    -f <db>      Database to use (default $HOME/.mailscrubber.db)
+    -min <prob>  Don't print messages with result below <prob>   
+    -max <prob>  Don't print messages with result above <prob>   
+    {mailbox}*   Mailboxes containing messages to analyze
+
+  scrubmail [-f db] list {regexp}*
+  Dump word statistics in database
+    -f <db>      Database to use (default $HOME/.mailscrubber.db)
+    {regexp}*    Regular expression for words we are interested in
 ";
       exit 2
   | Sys_error msg ->
