@@ -9,9 +9,8 @@ CPP=gcc -E -P $(LANGUAGES) -
 # Where to install the binary
 BINDIR=/usr/local/bin
 
-# Where to install the man page
-MANEXT=1
-MANDIR=/usr/local/man/man$(MANEXT)
+# Where to install the man pages
+MANDIR=/usr/local/man
 
 ### End of configuration section
 
@@ -32,7 +31,8 @@ all: spamoracle
 
 install:
 	cp spamoracle $(BINDIR)/spamoracle
-	cp spamoracle.1 $(MANDIR)/spamoracle.$(MANEXT)
+	cp spamoracle.1 $(MANDIR)/man1/spamoracle.1
+	cp spamoracle.conf.5 $(MANDIR)/man5/spamoracle.conf.5
 
 spamoracle: $(NATOBJS)
 	$(OCAMLOPT) -o spamoracle $(NATLIBS) $(NATOBJS)
