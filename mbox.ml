@@ -8,7 +8,7 @@ type t =
 
 let open_mbox_file filename =
   if Filename.check_suffix filename ".gz" then
-    { ic = Unix.open_process_in ("zcat " ^filename);
+    { ic = Unix.open_process_in ("gunzip -c " ^filename);
       zipped = true;
       start = "";
       buf = Buffer.create 50000 }
