@@ -19,8 +19,14 @@
 module StringSet = Set.Make(String)
 module StringMap = Map.Make(String)
 
-let dec_attr = ref ((fun _ -> assert false) : string -> string)
-let dec_url = ref ((fun _ -> assert false) : string -> string)
+let re_url_encoding = Str.regexp "%\\([0-9A-Fa-f][0-9A-Fa-f]\\)"
+
+let decode_url_percent s =
+  let n = int_of_string ("0x" ^ Str.matched_group 1 s) in
+  String.make 1 (Char.chr n)
+
+let decode_url s =
+  Str.global_substitute re_url_encoding decode_url_percent s
 
 let entity_table =
   List.fold_left
@@ -62,7 +68,11 @@ module Output = struct
 
   type t = { txt: Buffer.t; extra: Buffer.t }
 
-  let create() = { txt = Buffer.create 16384; extra = Buffer.create 1024 }
+  let create() = { txt = Buffer.create 2048; extra = Buffer.create 256 }
+
+  let clear ob =
+    Buffer.clear ob.txt;
+    Buffer.clear ob.extra
 
   let contents ob =
     Buffer.add_char ob.txt '\n';
@@ -85,39 +95,52 @@ module Output = struct
     match t with
       "a" ->
         begin match String.lowercase n with
-          "href" -> add_extra ob (!dec_url (!dec_attr s))
+          "href" -> add_extra ob (decode_url s)
         | _ -> ()
         end
     | "img" ->
         begin match String.lowercase n with
-          "src" -> add_extra ob (!dec_url (!dec_attr s))
-        | "alt" -> add_extra ob (!dec_attr s)
+          "src" -> add_extra ob (decode_url s)
+        | "alt" -> add_extra ob s
         | _ -> ()
         end
     | _ -> ()     
 end
+
+let ob = Output.create()
+let tag = ref ""
+let attr_name = ref ""
+let attr_value = Buffer.create 128
+
 }
 
 let ws = [' ' '\n' '\r' '\t']
 let name = ['A'-'Z' 'a'-'z'] ['A'-'Z' 'a'-'z' '0'-'9' '.' '-']*
-let unquotedattrib = [^ '>' ' ' '\n' '\r' '\t']+
-let hexdigit = ['0'-'9' 'A'-'F' 'a'-'f']
+let unquotedattrib = 
+  [^ '\'' '\"' '>' ' ' '\n' '\r' '\t'] [^ '>' ' ' '\n' '\r' '\t']*
 
-rule main ob = parse
+rule main = parse
     "<!" ['D' 'd']['O' 'o']['C' 'c']['T' 't']['Y' 'y']['P' 'p']['E' 'e']
          [^ '>'] * '>'
-      { main ob lexbuf }
+      { main lexbuf }
   | "<!--"
-      { comment lexbuf; main ob lexbuf }
-  | "<" "/"? (name as tag)
-      { tagbody ob (String.lowercase tag) lexbuf;
-        main ob lexbuf }
+      { comment lexbuf; main lexbuf }
+  | "<" name
+      { let s = Lexing.lexeme lexbuf in
+        tag := String.lowercase(String.sub s 1 (String.length s - 1));
+        tagbody lexbuf;
+        main lexbuf }
+  | "</" name
+      { let s = Lexing.lexeme lexbuf in
+        tag := String.lowercase(String.sub s 2 (String.length s - 2));
+        tagbody lexbuf;
+        main lexbuf }
   | "<"                         (* tolerance *)
-      { Output.char ob '<'; main ob lexbuf }
+      { Output.char ob '<'; main lexbuf }
   | "&"
-      { Output.char ob (entity lexbuf); main ob lexbuf }
+      { Output.char ob (entity lexbuf); main lexbuf }
   | [^ '<' '&']+
-      { Output.string ob (Lexing.lexeme lexbuf); main ob lexbuf }
+      { Output.string ob (Lexing.lexeme lexbuf); main lexbuf }
   | eof
       { Output.contents ob }
 
@@ -129,30 +152,68 @@ and comment = parse
   | eof                         (* tolerance *)
       { () }
 
-and tagbody ob tag = parse
+and tagbody = parse
     ">"
-      { Output.tag ob tag }
-  | (name as n) ws* '=' ws* "'" ([^ '\'']* as s) "'"
-      { Output.tag_attr ob tag n s; tagbody ob tag lexbuf }
-  | (name as n) ws* '=' ws* "\"" ([^ '\"']* as s) "\""
-      { Output.tag_attr ob tag n s; tagbody ob tag lexbuf }
-  | (name as n) ws* '=' ws* (unquotedattrib as s)
-      { Output.tag_attr ob tag n s; tagbody ob tag lexbuf }
-  | name as n
-      { Output.tag_attr ob tag n ""; tagbody ob tag lexbuf }
+      { Output.tag ob !tag }
+  | name
+      { attr_name := Lexing.lexeme lexbuf;
+        tagattrib lexbuf;
+        tagbody lexbuf }
   | _                           (* tolerance -- should be ws *)
-      { tagbody ob tag lexbuf }
+      { tagbody lexbuf }
   | eof                         (* tolerance *)
-      { Output.tag ob tag }
+      { Output.tag ob !tag }
+
+and tagattrib = parse
+    ws* '=' ws* 
+      { tagvalue lexbuf }
+  | ""
+      { Output.tag_attr ob !tag !attr_name "" }
+
+and tagvalue = parse
+    "'"
+      { Buffer.clear attr_value; singlequoted lexbuf }
+  | "\""
+      { Buffer.clear attr_value; doublequoted lexbuf }
+  | unquotedattrib
+      { Output.tag_attr ob !tag !attr_name (Lexing.lexeme lexbuf) }
+  | ""                          (* tolerance *)
+      { Output.tag_attr ob !tag !attr_name "" }
+
+and singlequoted = parse
+    "'" | eof                   (* eof is tolerance *)
+      { Output.tag_attr ob !tag !attr_name (Buffer.contents attr_value) }
+  | "&"
+      { Buffer.add_char attr_value (entity lexbuf); singlequoted lexbuf }
+  | _
+      { Buffer.add_char attr_value (Lexing.lexeme_char lexbuf 0);
+        singlequoted lexbuf }
+
+and doublequoted = parse
+    "\"" | eof                 (* eof is tolerance *)
+      { Output.tag_attr ob !tag !attr_name (Buffer.contents attr_value) }
+  | "&"
+      { Buffer.add_char attr_value (entity lexbuf); doublequoted lexbuf }
+  | _
+      { Buffer.add_char attr_value (Lexing.lexeme_char lexbuf 0);
+        doublequoted lexbuf }
 
 and entity = parse
-    '#' (['0'-'9']+ as s) ';'?
-      { let n = int_of_string s in
+    '#' ['0'-'9']+
+      { let s = Lexing.lexeme lexbuf in
+        let n = int_of_string (String.sub s 1 (String.length s - 1)) in
+        entity_end lexbuf;
         if n >= 0 && n <= 255 then Char.chr n else '\255' }
-  | (name as s) ';'?
-      { try StringMap.find s entity_table with Not_found -> '\255' }
+  | name
+      { let s = Lexing.lexeme lexbuf in
+        entity_end lexbuf;
+        try StringMap.find s entity_table with Not_found -> '\255' }
   | ""                          (* tolerance *)
       { '&' }
+
+and entity_end = parse
+    ";" ?
+      { () }
 
 and decode_attribute ob = parse
     '&'
@@ -162,25 +223,7 @@ and decode_attribute ob = parse
   | eof
       { Buffer.contents ob }
 
-and decode_url ob = parse
-    '%' (hexdigit hexdigit as s)
-      { let n = int_of_string ("0x" ^ s) in
-        Buffer.add_char ob (Char.chr n);
-        decode_url ob lexbuf }
-  | '%'                         (* tolerance *)
-      { Buffer.add_char ob '%'; decode_url ob lexbuf }
-  | [^ '%']+ as s
-      { Buffer.add_string ob s; decode_url ob lexbuf }
-  | eof
-      { Buffer.contents ob }
-
 {
-let _ =
-  dec_attr :=
-    (fun s -> decode_attribute (Buffer.create 128) (Lexing.from_string s));
-  dec_url :=
-    (fun s -> decode_url (Buffer.create 128) (Lexing.from_string s))
-
 let extract_text s =
-  main (Output.create()) (Lexing.from_string s)
+  Output.clear ob; main (Lexing.from_string s)
 }
