@@ -150,13 +150,13 @@ let main () =
 Usage:
   spamoracle [-f db] mark {mailbox}*
   Add 'X-Spam:' headers to messages with result of analysis
-    -f <db>      Database to use (default $HOME/.mailscrubber.db)
+    -f <db>      Database to use (default $HOME/.spamoracle.db)
     {mailbox}*   Mailboxes containing messages to markup
                  If none given, read single msg from standard input
 
   spamoracle [-f db] add [-v] -spam {spambox}* -good {goodbox}*
   Create or update database with known spam or non-spam messages
-    -f <db>      Database to use (default $HOME/.mailscrubber.db)
+    -f <db>      Database to use (default $HOME/.spamoracle.db)
     -v           Print progress bar
     -spam        Indicate subsequent mailboxes contain spam
     -good        Indicate subsequent mailboxes contain good msgs (not spam)
@@ -166,14 +166,14 @@ Usage:
 
   spamoracle [-f db] test [-min prob] [-max prob] {mailbox}*
   Analyze messages and print summary of results
-    -f <db>      Database to use (default $HOME/.mailscrubber.db)
+    -f <db>      Database to use (default $HOME/.spamoracle.db)
     -min <prob>  Don't print messages with result below <prob>   
     -max <prob>  Don't print messages with result above <prob>   
     {mailbox}*   Mailboxes containing messages to analyze
 
   spamoracle [-f db] list {regexp}*
   Dump word statistics in database
-    -f <db>      Database to use (default $HOME/.mailscrubber.db)
+    -f <db>      Database to use (default $HOME/.spamoracle.db)
     {regexp}*    Regular expression for words we are interested in
 ";
       exit 2
