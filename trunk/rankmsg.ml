@@ -17,14 +17,12 @@
 open Mail
 open Database
 
-let word_present_in w res =
-  try
-    for i = 0 to Array.length res - 1 do
-      if w = fst res.(i) then raise Exit
-    done;
-    false
-  with Exit ->
-    true
+let word_count_in w res =
+  let count = ref 0 in
+  for i = 0 to Array.length res - 1 do
+    if w = fst res.(i) then incr count
+  done;
+  !count
 
 let add_word w p res =
   let i = ref 0 in
@@ -43,11 +41,13 @@ let add_word w p res =
 let process_word (db, res) w =
   try
     let (g, b) = Hashtbl.find db.s_freq w in
-    let g = 2 * g in
-    let pgood = float g /. float db.s_num_good
-    and pbad = float b /. float db.s_num_spam in
-    let p = max 0.01 (min 0.99 (pbad /. (pgood +. pbad))) in
-    if not (word_present_in w res) then add_word w p res
+    if word_count_in w res < 2 then begin
+      let g = 2 * g in
+      let pgood = float g /. float db.s_num_good
+      and pbad = float b /. float db.s_num_spam in
+      let p = max 0.01 (min 0.99 (pbad /. (pgood +. pbad))) in
+      add_word w p res
+    end
   with Not_found ->
     ()
 
