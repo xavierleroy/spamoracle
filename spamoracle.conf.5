@@ -16,6 +16,13 @@ but an alternate location can be specified using the
 flag to
 .BR spamoracle (1).
 
+.B Important note:
+most of the configuration parameters should not be modified lightly,
+as this may result in completely wrong e-mail classification.  
+Familiarity with Graham's filtering algorithm, as described in the
+paper referenced at the end of this page, is required to really
+understand the effect of the parameters.
+
 .SH SYNTAX
 
 The
@@ -164,6 +171,7 @@ parameter.
 .IR boolean ,
 default value
 .BR true )
+.br
 If this parameter is set,
 .B spamoracle mark
 generates a one-line summary of the attachments of the incoming messages,
@@ -172,4 +180,96 @@ Setting this parameter to
 .B false
 disables the generation of this extra header.
 .TP
+.B num_meaningful_words
+(type
+.IR integer ,
+default value
+.BR 15 )
+.br
+Maximal number of "meaningful" words that are retained for computing
+the spam probability.  During mail analysis,
+.B spamoracle
+extracts all words of the message, and retains those whose spam frequency
+(frequency of occurrence in spam messages) is closest to 1 or to 0.  
+At most
+.B num_meaningful_words
+such "meaningful" words are retained.
+.TP
+.B max_repetitions
+(type
+.IR integer ,
+default value
+.BR 2 )
+.br
+Maximum number of times a given word can occur in the set of
+"meaningful" words retained for computing the spam probability.
+The default value of 2 means that at most 2 occurrences of the same
+word will be retained.
+.TP
+.B low_freq_limit
+(type
+.IR float ,
+default value
+.BR 0.01 )
+.TP
+.B high_freq_limit
+(type
+.IR float ,
+default value
+.BR 0.99 )
+.br
+The spam frequency of a word is computed as the number of occurrences
+in spam divided by number of occurrences in all messages.  This ratio
+is then clipped to the interval [
+.BR low_freq_limit ,
+.B high_freq_limit
+], so that words that are extremely rare or extremely common in spam
+do not bias the probability computation too much.  The default values
+of 0.01 and 0.99 are adequate for a corpus of a few thousand e-mails.
+For larger corpora (e.g. 10000 e-mails), the values 0.001 and 0.999
+may give better results.
+.TP
+.B min_meaningful_words
+(type
+.IR integer ,
+default value
+.BR 5 )
+.br
+Minimum number of "meaningful" words below which 
+.B spamoracle mark
+refuses to classify the e-mail and outputs "unknown" status.  This
+happens with very short e-mails, or e-mails that consist exclusively of
+links and pictures.
+.TP
+.B good_mail_prob
+(type
+.IR float ,
+default value
+.BR 0.2 )
+.br
+Spam probability below which the e-mail is classified as non-spam.
+.TP
+.B spam_mail_prob
+(type
+.IR float ,
+default value
+.BR 0.8 )
+.br
+Spam probability above which the e-mail is classified as spam.
+Messages whose probability falls between
+.B good_mail_prob
+and
+.B spam_mail_prob
+are classified as "unknown".
+
+.SH AUTHOR
+Xavier Leroy <Xavier.Leroy@inria.fr>
+
+.SH "SEE ALSO"
+
+.BR spamoracle (1)
+
+.B http://www.paulgraham.com/spam.html
+(Paul Graham's seminal paper)
+
 
