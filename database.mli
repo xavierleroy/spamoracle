@@ -35,5 +35,7 @@ val add_good: full -> string -> unit
 val add_spam: full -> string -> unit
 val dump: full -> out_channel -> unit
 val restore: in_channel -> full
+val in_short: short -> string -> bool
+val in_full: full -> string -> bool
 
 exception Error of string

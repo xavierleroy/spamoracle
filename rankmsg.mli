@@ -20,4 +20,4 @@ type rank =
     explanation: string }
 
 val rank_message: Database.short -> Mail.message -> rank
-
+val word_proba: int -> int -> int -> int -> float

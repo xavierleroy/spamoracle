@@ -35,10 +35,14 @@ val max_repetitions : int ref
       can appear. *)
 
 val low_freq_limit : float ref
-  (** Lower limit for word frequencies.  Default is 0.01. *)
+  (** Lower limit for word frequencies.  Default is 0.001. *)
 
 val high_freq_limit : float ref
-  (** Upper limit for word frequencies.  Default is 0.99. *)
+  (** Upper limit for word frequencies.  Default is 0.999. *)
+
+val robinson_s : float ref
+val robinson_x : float ref
+  (** Robinson's parameters for taking word frequencies into account. *)
 
 val min_meaningful_words : int ref
   (** Number of meaningful words below which mails are classified as unknown *)

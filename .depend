@@ -24,8 +24,8 @@ rankmsg.cmx: config.cmx database.cmx mail.cmx refhosts.cmx wordsplit.cmx \
     rankmsg.cmi 
 refhosts.cmo: refhosts.cmi 
 refhosts.cmx: refhosts.cmi 
-testsplit.cmo: mail.cmi mbox.cmi wordsplit.cmi 
-testsplit.cmx: mail.cmx mbox.cmx wordsplit.cmx 
+virus.cmo: mail.cmi mbox.cmi zip.cmo 
+virus.cmx: mail.cmx mbox.cmx zip.cmx 
 wordsplit.cmo: wordsplit.cmi 
 wordsplit.cmx: wordsplit.cmi 
 attachments.cmi: mail.cmi 
