@@ -53,8 +53,11 @@ let all_uppercase s =
     true
   with Exit ->
     false
-}
 
+let adjust s n =
+  if String.length s <= n then s else String.sub s 0 n
+
+}
 
 let word_constituent = [
    'a'-'z' 'A'-'Z' '-' '\''
@@ -84,6 +87,26 @@ let numeric = ['0'-'9' '.' ',' '$' '%' '\164' (* Euro *)]
 
 let weird_character = ['\127' - '\255']
 
+#ifdef JAPANESE
+let jis_snd =
+  ['\032'-'\127']
+
+let kanji =
+  ['\048'-'\116'] jis_snd
+
+let katakana =
+  (['\037'] jis_snd | "\033\060")
+
+let jis_char =
+  ['\032'-'\116'] jis_snd
+
+let jis_in =
+  "\027$" '(' ? ['@' 'B']
+
+let jis_out =
+  "\027(" ['B' 'J' 'H']
+#endif
+
 rule split = parse
     word_constituent word_constituent word_constituent word_constituent *
       { fun action ->
@@ -97,6 +120,10 @@ rule split = parse
           let s = Lexing.lexeme lexbuf in
           if String.length s <= 8 then (normalize s; action s);
           split lexbuf action }
+#ifdef JAPANESE
+  | jis_in
+      { split_jis lexbuf }
+#endif
   | weird_character weird_character weird_character weird_character *
       { fun action ->
           let s = Lexing.lexeme lexbuf in
@@ -106,6 +133,28 @@ rule split = parse
       { fun action -> () }
   | _
       { split lexbuf }
+
+#ifdef JAPANESE
+and split_jis = parse
+    kanji kanji *
+      { fun action ->
+          let s = Lexing.lexeme lexbuf in
+          action ("\027$B" ^ adjust s 8 ^ "\027(B");
+          split_jis lexbuf action }
+  | katakana katakana katakana katakana *
+      { fun action ->
+          let s = Lexing.lexeme lexbuf in
+          action ("\027$B" ^ adjust s 12 ^ "\027(B");
+          split_jis lexbuf action }
+  | jis_char
+      { split_jis lexbuf }
+  | eof
+      { fun action -> () }
+  | jis_out
+      { split lexbuf }
+  | _
+      { split lexbuf }
+#endif
 
 {
 
