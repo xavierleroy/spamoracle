@@ -49,13 +49,17 @@ let word_proba g b num_g num_b =
   let pgood = cap (float g /. float num_g)
   and pbad = cap (float b /. float num_b) in
   let p = pbad /. (pgood +. pbad) in
-  (* Robinson's adjustement *)
-  let n = float (g + b) in
-  let p =
-    (!Config.robinson_s *. !Config.robinson_x +. n *. p)
-    /. (!Config.robinson_s +. n) in
-  (* Result normalization *)
-  normalize p !Config.low_freq_limit !Config.high_freq_limit
+  if !Config.robinson_s = 0.0 then
+    normalize p !Config.low_freq_limit !Config.high_freq_limit
+  else begin
+    (* Robinson's adjustement *)
+    let n = float (g + b) in
+    let p =
+      (!Config.robinson_s *. !Config.robinson_x +. n *. p)
+      /. (!Config.robinson_s +. n) in
+    (* Result normalization *)
+    normalize p !Config.low_freq_limit !Config.high_freq_limit
+  end
 
 let process_word (db, res) w =
   try
@@ -76,15 +80,26 @@ let process_msg ctx m =
 
 (* This is Graham's original approach *)
 
-let spaminess_score res =
-  let probs = List.map snd (Array.to_list res) in
-  let prod = List.fold_left ( *. ) 1.0 probs
-  and cprod = List.fold_left ( *. ) 1.0 (List.map (fun x -> 1.0 -. x) probs) in
-  prod /. (prod +. cprod)
+let spaminess_score_graham res =
+  let p = ref 1.0 and pexp = ref 0
+  and cp = ref 1.0 and cpexp = ref 0 in
+  for i = 0 to Array.length res - 1 do
+    let (_, x) = res.(i) in
+    p := !p *. x;
+    if !p <= 1e-100 then begin 
+      let (m, e) = frexp !p in p := m; pexp := !pexp + e
+    end;
+    cp := !cp *. (1.0 -. x);
+    if !cp <= 1e-100 then begin
+      let (m, e) = frexp !cp in cp := m; cpexp := !cpexp + e
+    end
+  done;
+  if !cpexp < !pexp then cp := ldexp !cp (!cpexp - !pexp)
+  else if !cpexp > !pexp then p := ldexp !p (!pexp - !cpexp);
+  !p /. (!p +. !cp)
 
 (* This is Robinson's chi-square stuff *)
 
-(****
 let chi2_inverse m n =   (* chi2 inverse of 2m with 2n degrees *)
   let t = ref (exp (-. m)) in
   let s = ref !t in
@@ -101,17 +116,16 @@ let chi2_hypothesis ps =
   let p = ref 1.0 and pexp = ref 0 in
   for i = 0 to Array.length ps - 1 do
     p := !p *. ps.(i);
-    if !p <= 1e-200 then begin
+    if !p <= 1e-100 then begin
       let (x, e) = frexp !p in p := x; pexp := !pexp + e
     end
   done;
   chi2_inverse (-. (log !p +. log2 *. float !pexp)) (Array.length ps)
 
-let spaminess_score res =
+let spaminess_score_robinson res =
   let probs = Array.map snd res in
   let cprobs = Array.map (fun x -> 1.0 -. x) probs in
   0.5 *. (1.0 +. chi2_hypothesis probs -. chi2_hypothesis cprobs)
-****)
 
 type rank =
   { spam_prob: float;
@@ -122,7 +136,10 @@ let rank_message db msg =
   Refhosts.reset();
   let res = Array.make !Config.num_words_retained ("", 0.5) in
   process_msg (db, res) msg;
-  let p = spaminess_score res in
+  let p =
+    if !Config.use_chi_square
+    then spaminess_score_robinson res
+    else spaminess_score_graham res in
   let meaningful = ref 0 in
   while !meaningful < Array.length res && fst res.(!meaningful) <> ""
   do incr meaningful done;
