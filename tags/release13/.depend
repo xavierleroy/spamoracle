@@ -1,0 +1,28 @@
+attachments.cmo: mail.cmi attachments.cmi 
+attachments.cmx: mail.cmx attachments.cmi 
+configfile.cmo: configfile.cmi 
+configfile.cmx: configfile.cmi 
+config.cmo: configfile.cmi config.cmi 
+config.cmx: configfile.cmx config.cmi 
+database.cmo: database.cmi 
+database.cmx: database.cmi 
+htmlscan.cmo: config.cmi htmlscan.cmi 
+htmlscan.cmx: config.cmx htmlscan.cmi 
+mail.cmo: config.cmi htmlscan.cmi mail.cmi 
+mail.cmx: config.cmx htmlscan.cmx mail.cmi 
+main.cmo: config.cmi configfile.cmi database.cmi mbox.cmi processing.cmi 
+main.cmx: config.cmx configfile.cmx database.cmx mbox.cmx processing.cmx 
+mbox.cmo: mbox.cmi 
+mbox.cmx: mbox.cmi 
+processing.cmo: attachments.cmi config.cmi database.cmi mail.cmi rankmsg.cmi \
+    wordsplit.cmi processing.cmi 
+processing.cmx: attachments.cmx config.cmx database.cmx mail.cmx rankmsg.cmx \
+    wordsplit.cmx processing.cmi 
+rankmsg.cmo: config.cmi database.cmi mail.cmi wordsplit.cmi rankmsg.cmi 
+rankmsg.cmx: config.cmx database.cmx mail.cmx wordsplit.cmx rankmsg.cmi 
+wordsplit.cmo: wordsplit.cmi 
+wordsplit.cmx: wordsplit.cmi 
+attachments.cmi: mail.cmi 
+config.cmi: configfile.cmi 
+processing.cmi: database.cmi 
+rankmsg.cmi: database.cmi mail.cmi 

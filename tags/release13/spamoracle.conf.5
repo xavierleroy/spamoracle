@@ -1,0 +1,275 @@
+.TH SPAMORACLE.CONF 5
+
+.SH NAME
+spamoracle.conf \- SpamOracle configuration file format
+
+.SH DESCRIPTION
+The
+.B spamoracle.conf
+file is a configuration file governing the operation of the
+.BR spamoracle (1)
+e-mail classification tool.  By default, the configuration file
+is searched in
+.IB $HOME /.spamoracle.conf
+but an alternate location can be specified using the
+.B -config
+flag to
+.BR spamoracle (1).
+
+.B Important note:
+most of the configuration parameters should not be modified lightly,
+as this may result in completely wrong e-mail classification.  
+Familiarity with Graham's filtering algorithm, as described in the
+paper referenced at the end of this page, is required to really
+understand the effect of the parameters.
+
+.SH SYNTAX
+
+The
+.B spamoracle.conf
+file is composed of lines of the form
+.I variable
+.B =
+.IR value .
+Lines starting with a hash sign (#) are treated as comments and ignored.
+Blank lines are ignored.
+
+Depending on the type of the variable (see the list of variables below), the
+.I value 
+part is of the following forms:
+.TP
+.I string
+A sequence of characters.  Blanks (spaces, tabs) at the beginning and the
+end of the string are ignored.  Alternatively, the string can be
+enclosed in double quotes ("), in which case spaces are not trimmed.
+.TP
+.I boolean
+Either
+.BR on,
+.BR yes,
+.BR true,
+or
+.B 1
+to activate the boolean option, or
+.BR off,
+.BR no,
+.BR false,
+or
+.B 0
+to deactivate it.
+.TP
+.I integer
+A decimal integer 
+.TP
+.I float
+A decimal floating-point number.
+.TP
+.I regexp
+A regular expression in
+.BR emacs (1)
+syntax.  The repetition operators are
+.BR * ,
+.BR + ,
+and
+.BR ? .
+Alternation is written
+.B \e|
+and grouping is written
+.BR \e( ... \e) .
+Character classes are written between brackets
+.BR [ ... ]
+as usual.  A single dot denotes any character except newline.
+Regular expressions are case-insensitive.
+
+.SH CONFIGURABLE PARAMETERS
+
+.TP
+.B database_file
+(type
+.IR string,
+default value
+.IB $HOME /.spamoracle.db
+)
+.br
+The location of the file that contains the database of word frequencies
+used by
+.BR spamoracle (1).
+.TP
+.B html_retain_tags
+(type
+.IR boolean,
+default value
+.BR false )
+.br
+In HTML-formatted e-mails and attachments, the names of HTML tags are
+normally not treated as words and are ignored for the word frequency
+calculations. If the
+.B html_retain_tags
+parameter is set to
+.BR true ,
+HTML tags (such as
+.B img
+or
+.BR bold )
+are treated as words and included in the computation of word frequencies.
+.TP
+.B html_tag_attributes
+(type
+.IR regexp ,
+default value
+.br
+.BR a/href\e|img/src\e|img/alt\e|frame/src\e|font/face\e|font/color )
+.br
+This regular expression matches pairs of HTML tags and HTML attributes
+written as
+.IB tag / attribute.
+When scanning HTML-formatted e-mails and attachments, attributes to
+HTML tags are normally ignored, unless the tag/attribute pair matches
+the regular expression
+.BR html_tag_attributes .
+If the tag/attribute pair matches this regexp, the value of the attribute
+(for instance, the URL for the
+.BR a / href
+attribute) is scanned for words.
+.TP
+.B mail_headers
+(type
+.IR regexp ,
+default value
+.BR from:\e|subject: )
+.br
+A regular expression determining which headers of an e-mail message
+are scanned for words.
+.TP
+.B spam_header
+(type
+.IR string ,
+default value
+.BR X-Spam )
+.br
+The name of the header that
+.B spamoracle mark
+adds to incoming e-mail messages, with the results of the spam/non-spam 
+classification.
+.TP
+.B attachments_header
+(type
+.IR string ,
+default value
+.BR X-Attachments )
+.br
+The name of the header that
+.B spamoracle mark
+adds to incoming e-mail messages, with the one-line summary of attachment 
+types, names and character sets.  The generation of this header can
+be turned off with the
+.B summarize_attachment
+parameter.
+.TP
+.B summarize_attachment
+(type
+.IR boolean ,
+default value
+.BR true )
+.br
+If this parameter is set,
+.B spamoracle mark
+generates a one-line summary of the attachments of the incoming messages,
+and inserts this summary in the message headers.
+Setting this parameter to
+.B false
+disables the generation of this extra header.
+.TP
+.B num_meaningful_words
+(type
+.IR integer ,
+default value
+.BR 15 )
+.br
+Maximal number of "meaningful" words that are retained for computing
+the spam probability.  During mail analysis,
+.B spamoracle
+extracts all words of the message, and retains those whose spam frequency
+(frequency of occurrence in spam messages) is closest to 1 or to 0.  
+At most
+.B num_meaningful_words
+such "meaningful" words are retained.
+.TP
+.B max_repetitions
+(type
+.IR integer ,
+default value
+.BR 2 )
+.br
+Maximum number of times a given word can occur in the set of
+"meaningful" words retained for computing the spam probability.
+The default value of 2 means that at most 2 occurrences of the same
+word will be retained.
+.TP
+.B low_freq_limit
+(type
+.IR float ,
+default value
+.BR 0.01 )
+.TP
+.B high_freq_limit
+(type
+.IR float ,
+default value
+.BR 0.99 )
+.br
+The spam frequency of a word is computed as the number of occurrences
+in spam divided by number of occurrences in all messages.  This ratio
+is then clipped to the interval [
+.BR low_freq_limit ,
+.B high_freq_limit
+], so that words that are extremely rare or extremely common in spam
+do not bias the probability computation too much.  The default values
+of 0.01 and 0.99 are adequate for a corpus of a few thousand e-mails.
+For larger corpora (e.g. 10000 e-mails), the values 0.001 and 0.999
+may give better results.
+.TP
+.B min_meaningful_words
+(type
+.IR integer ,
+default value
+.BR 5 )
+.br
+Minimum number of "meaningful" words below which 
+.B spamoracle mark
+refuses to classify the e-mail and outputs "unknown" status.  This
+happens with very short e-mails, or e-mails that consist exclusively of
+links and pictures.
+.TP
+.B good_mail_prob
+(type
+.IR float ,
+default value
+.BR 0.2 )
+.br
+Spam probability below which the e-mail is classified as non-spam.
+.TP
+.B spam_mail_prob
+(type
+.IR float ,
+default value
+.BR 0.8 )
+.br
+Spam probability above which the e-mail is classified as spam.
+Messages whose probability falls between
+.B good_mail_prob
+and
+.B spam_mail_prob
+are classified as "unknown".
+
+.SH AUTHOR
+Xavier Leroy <Xavier.Leroy@inria.fr>
+
+.SH "SEE ALSO"
+
+.BR spamoracle (1)
+
+.B http://www.paulgraham.com/spam.html
+(Paul Graham's seminal paper)
+
+
