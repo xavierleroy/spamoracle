@@ -41,13 +41,16 @@ let add_word w p res =
 let normalize (p : float) low high =
   if p > high then high else if p < low then low else p
 
+let cap (p : float) =
+  if p > 1.0 then 1.0 else p
+
 let process_word (db, res) w =
   try
     let (g, b) = Hashtbl.find db.s_freq w in
     if word_count_in w res < !Config.max_repetitions then begin
       let g = 2 * g in
-      let pgood = float g /. float db.s_num_good
-      and pbad = float b /. float db.s_num_spam in
+      let pgood = cap (float g /. float db.s_num_good)
+      and pbad = cap (float b /. float db.s_num_spam) in
       let p = 
         normalize (pbad /. (pgood +. pbad)) 
                   !Config.low_freq_limit !Config.high_freq_limit in
