@@ -13,8 +13,8 @@ let re_charset =
   Str.regexp_case_fold "charset=\\(\"\\([^\"]+\\)\"\\|[^ \t;]+\\)"
 let re_innocuous_charsets =
   Str.regexp_case_fold "us-ascii\\|iso[-_]8859[-_]1$\\|iso[-_]8859[-_]15\\|windows-1252"
-let re_filename =
-  Str.regexp_case_fold "filename=\\(\"\\([^\"]+\\)\"\\|[^ \t;]+\\)"
+let re_name =
+  Str.regexp_case_fold "name=\\(\"\\([^\"]+\\)\"\\|[^ \t;]+\\)"
 
 let match_anchored re s =
   Str.string_match re s 0
@@ -36,8 +36,13 @@ let summarize msg =
       if not (Str.string_match re_innocuous_charsets c 0) then
         bprintf res "cset=\"%s\" " c
     end;
+    if match_unanchored re_name h then begin
+      let c =
+        try Str.matched_group 2 h with Not_found -> Str.matched_group 1 h in
+      bprintf res "name=\"%s\" " c
+    end;
     let h = header "content-disposition:" m in
-    if match_unanchored re_filename h then begin
+    if match_unanchored re_name h then begin
       let c =
         try Str.matched_group 2 h with Not_found -> Str.matched_group 1 h in
       bprintf res "name=\"%s\" " c
