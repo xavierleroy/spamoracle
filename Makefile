@@ -7,7 +7,7 @@ LANGUAGES=-DFRENCH #-DSPANISH -DITALIAN -DGERMAN
 CPP=gcc -E -P $(LANGUAGES) -
 
 # Where to install the binary
-BINDIR=/usr/local/bin/spamoracle
+BINDIR=/usr/local/bin
 
 ### End of configuration section
 
