@@ -144,8 +144,15 @@ rule main = parse
       { Output.char ob '<'; main lexbuf }
   | "&"
       { Output.char ob (entity lexbuf); main lexbuf }
-  | [^ '<' '&']+
-      { Output.string ob (Lexing.lexeme lexbuf); main lexbuf }
+  (* This parses UTF-8 encodings of ISO Latin 1 characters in the
+     0x80 - 0xFF range *)
+  | ['\194'-'\195'] ['\128'-'\191']
+      { let a = Char.code (Lexing.lexeme_char lexbuf 0)
+        and b = Char.code (Lexing.lexeme_char lexbuf 1) in
+        Output.char ob (Char.chr (((a land 0x3) lsl 6) lor (b land 0x3F)));
+        main lexbuf }
+  | _
+      { Output.char ob (Lexing.lexeme_char lexbuf 0); main lexbuf }
   | eof
       { Output.contents ob }
 
