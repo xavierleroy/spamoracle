@@ -38,6 +38,14 @@ spamoracle \- a spam classification tool
 .B spamoracle
 .RB [ \-f
 .IR database ]
+.B stat
+[
+.I spambox ...
+]
+
+.B spamoracle
+.RB [ \-f
+.IR database ]
 .B list
 .I regexp ...
 
@@ -508,12 +516,15 @@ spamoracle restore < backupfile
 .SH "TECHNICAL DETAILS"
 
 SpamOracle's notion of "word" is any run of 3 to 12 of the following
-characters: letters, digits, single quotes, dashes (-), dollar and
-percent signs.  If support for non-English european languages was
+characters: letters, single quotes, and dashes (-).  
+If support for non-English european languages was
 compiled in, word characters also include the relevant accented letters 
-for the languages in question, plus the Euro sign.  All words are
+for the languages in question.  All words are
 mapped to lowercase, and accented letters are mapped to the corresponding
 non-accented letters.
+
+A run of 3 to 12 of the following characters also constitutes a word:
+digits, dots, commas, and dollar, Euro and percent signs.
 
 In addition, a run of three or more uppercase letters generates a
 pseudo-word
