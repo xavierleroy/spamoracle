@@ -185,7 +185,7 @@ let message_matches re m =
   let content_type = header "content-type:" m in
   Str.string_match re content_type 0
 
-let choose_in_multipart parts =
+let choose_in_multipart m =
   let rec choose pure other = function
     [] -> (pure, other)
   | m :: rem ->
@@ -193,11 +193,13 @@ let choose_in_multipart parts =
         choose (Some m) other rem
       else if message_matches re_content_text m then
         choose pure (Some m) rem
+      else if message_matches re_content_multipart_alternative m then
+        choose pure other (List.rev m.parts @ rem)
       else
         choose pure other rem in
   (* Favor text-only, unless much smaller than HTML
      (many spams are fake alternatives with nearly empty text part *)
-  match choose None None (List.rev parts) with
+  match choose None None (List.rev m.parts) with
     (Some pure, Some other) ->
       if String.length pure.body >= String.length other.body / 4
       then Some pure
@@ -212,7 +214,7 @@ let rec iter_text_parts fn m =
     fn m
   else if Str.string_match re_content_multipart_alternative content_type 0 
   then begin
-    match choose_in_multipart m.parts with
+    match choose_in_multipart m with
       None -> ()
     | Some m -> fn m
   end
