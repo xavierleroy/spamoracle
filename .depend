@@ -4,17 +4,18 @@ database.cmo: database.cmi
 database.cmx: database.cmi 
 mail.cmo: mail.cmi 
 mail.cmx: mail.cmi 
-main.cmo: database.cmi mbox.cmi processing.cmo 
+main.cmo: database.cmi mbox.cmi processing.cmi 
 main.cmx: database.cmx mbox.cmx processing.cmx 
 mbox.cmo: mbox.cmi 
 mbox.cmx: mbox.cmi 
 processing.cmo: attachments.cmi database.cmi mail.cmi rankmsg.cmi \
-    wordsplit.cmi 
+    wordsplit.cmi processing.cmi 
 processing.cmx: attachments.cmx database.cmx mail.cmx rankmsg.cmx \
-    wordsplit.cmx 
+    wordsplit.cmx processing.cmi 
 rankmsg.cmo: database.cmi mail.cmi wordsplit.cmi rankmsg.cmi 
 rankmsg.cmx: database.cmx mail.cmx wordsplit.cmx rankmsg.cmi 
 wordsplit.cmo: wordsplit.cmi 
 wordsplit.cmx: wordsplit.cmi 
 attachments.cmi: mail.cmi 
+processing.cmi: database.cmi 
 rankmsg.cmi: database.cmi mail.cmi 
