@@ -77,16 +77,25 @@ let read_full filename =
   { f_num_good = ng; f_num_spam = ns; 
     f_low_freq = low_freq; f_high_freq = high_freq }
 
+let temp_file basename =
+  let rec tmpfile counter =
+    if counter > 10000 then raise (Error "cannot create temporary database");
+    let filename = basename ^ string_of_int counter in
+    try
+      (filename,
+       open_out_gen [Open_wronly; Open_creat; Open_excl; Open_binary] 0o600
+                    filename)
+    with Sys_error _ ->
+      tmpfile (counter + 1)
+  in tmpfile (Unix.getpid())
+
 let write_full filename db =
   let basename, zip =
     if Filename.check_suffix filename ".gz" then
       Filename.chop_suffix filename ".gz", true
     else
       filename, false in
-  let tempname = basename ^ ".tmp" in
-  let oc =
-    open_out_gen [Open_wronly; Open_trunc; Open_creat; Open_binary] 0o600
-                 tempname in
+  let (tempname, oc) = temp_file (basename ^ ".tmp") in
   output_string oc magic;
   output_binary_int oc db.f_num_good;
   output_binary_int oc db.f_num_spam;
