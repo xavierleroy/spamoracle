@@ -1,0 +1,188 @@
+(***********************************************************************)
+(*                                                                     *)
+(*                 SpamOracle -- a Bayesian spam filter                *)
+(*                                                                     *)
+(*            Xavier Leroy, projet Cristal, INRIA Rocquencourt         *)
+(*                                                                     *)
+(*  Copyright 2002 Institut National de Recherche en Informatique et   *)
+(*  en Automatique.  This file is distributed under the terms of the   *)
+(*  GNU Public License version 2.                                      *)
+(*                                                                     *)
+(***********************************************************************)
+
+(* $Id$ *)
+
+(* Decompose a string into words. *)
+
+{
+(* Map uppercase to lowercase.  Remove ISO Latin 1 accents. *)
+
+let tbl = "\
+\000\001\002\003\004\005\006\007\008\t\n\011\012\013\014\015\
+\016\017\018\019\020\021\022\023\024\025\026\027\028\029\030\031 \
+!\"#$%&'()*+,-./\
+0123456789:;<=>?\
+@abcdefghijklmno\
+pqrstuvwxyz[\\]^_\
+`abcdefghijklmno\
+pqrstuvwxyz{|}~\127\
+\128\129\130\131\132\133\134\135\136\137\138\139\140\141\142\143\
+\144\145\146\147\148\149\150\151\152\153\154\155\156\157\158\159\
+\160¡¢£¤¥¦§¨©ª«¬­®¯\
+°±²³´µ¶·¸¹º»¼½¾¿\
+aaaaaaeceeeeiiii\
+Ðnooooo×ouuuuypß\
+aaaaaaeceeeeiiii\
+ðnooooo÷ouuuuypy"
+
+let normalize s =
+  for i = 0 to String.length s - 1 do
+    s.[i] <- tbl.[Char.code s.[i]]
+  done
+
+let all_uppercase s =
+  try
+    for i = 0 to String.length s - 1 do
+      let c = s.[i] in
+      if (c >= 'A' && c <= 'Z')
+      || (c >= '\192' && c <= '\214')
+      || (c >= '\216' && c <= '\222')
+      then ()
+      else raise Exit
+    done;
+    true
+  with Exit ->
+    false
+
+let adjust s n =
+  if String.length s <= n then s else String.sub s 0 n
+
+let unstretch s =
+  let t = String.create ((String.length s + 1) / 2) in
+  for i = 0 to String.length t - 1 do
+    t.[i] <- s.[i + i]
+  done;
+  t
+
+}
+
+let letter = [
+   'a'-'z' 'A'-'Z'
+#ifdef FRENCH
+   'À' 'Â' 'Ç' 'È' 'É' 'Ê' 'Ë' 'Î' 'Ï' 'Ô' 'Ù' 'Û' 'Ü'
+   'à' 'â' 'ç' 'è' 'é' 'ê' 'ë' 'î' 'ï' 'ô' 'ù' 'û' 'ü' 'ÿ'
+#endif
+#ifdef SPANISH
+   'Á' 'É' 'Í' 'Ó' 'Ú' 'Ü' 'Ñ'
+   'á' 'é' 'í' 'ó' 'ú' 'ü' 'ñ'
+#endif
+#ifdef ITALIAN
+   'É' 'Í' 'Ú' 'À' 'È' 'Ò'
+   'é' 'í' 'ú' 'à' 'è' 'ò'
+#endif
+#ifdef GERMAN
+   'Ä' 'Ö' 'Ü'
+   'ä' 'ö' 'ü' 'ß' 
+#endif
+#ifdef PORTUGUESE
+   'À' 'Á' 'Â' 'Ã' 'Ç' 'É' 'Ê' 'Í' 'Ó' 'Ô' 'Õ' 'Ú' 'Ü'
+   'à' 'á' 'â' 'ã' 'ç' 'é' 'ê' 'í' 'ó' 'ô' 'õ' 'ú' 'ü'
+#endif
+]
+
+let word_constituent = letter | ['-' '\'']
+
+let stretched_word =
+    letter ' ' letter ' ' letter ' ' letter (' ' letter) *
+  | letter '-' letter '-' letter '-' letter ('-' letter) *
+  | letter '_' letter '_' letter '_' letter ('_' letter) *
+  | letter '.' letter '.' letter '.' letter ('.' letter) *
+  | letter '*' letter '*' letter '*' letter ('*' letter) *
+  | letter '\'' letter '\'' letter '\'' letter ('\'' letter) *
+
+let numeric = ['0'-'9' '.' ',' '$' '%' '\164' (* Euro *)]
+
+let weird_character = ['\127' - '\255']
+
+#ifdef JAPANESE
+let jis_snd =
+  ['\032'-'\127']
+
+let kanji =
+  ['\048'-'\116'] jis_snd
+
+let katakana =
+  (['\037'] jis_snd | "\033\060")
+
+let jis_char =
+  ['\032'-'\116'] jis_snd
+
+let jis_in =
+  "\027$" '(' ? ['@' 'B']
+
+let jis_out =
+  "\027(" ['B' 'J' 'H']
+#endif
+
+rule split = parse
+    stretched_word
+      { fun action ->
+          let s = unstretch (Lexing.lexeme lexbuf) in
+          if all_uppercase s then
+            action ("U" ^ string_of_int (String.length s));
+          if String.length s <= 12 then (normalize s; action s);
+          split lexbuf action }
+  | word_constituent word_constituent word_constituent word_constituent *
+      { fun action ->
+          let s = Lexing.lexeme lexbuf in
+          if all_uppercase s then
+            action ("U" ^ string_of_int (String.length s));
+          if String.length s <= 12 then (normalize s; action s);
+          split lexbuf action }
+  | numeric numeric numeric numeric *
+      { fun action ->
+          let s = Lexing.lexeme lexbuf in
+          if String.length s <= 8 then (normalize s; action s);
+          split lexbuf action }
+#ifdef JAPANESE
+  | jis_in
+      { split_jis lexbuf }
+#endif
+  | weird_character weird_character weird_character weird_character *
+      { fun action ->
+          let s = Lexing.lexeme lexbuf in
+          action ("W" ^ string_of_int (String.length s));
+          split lexbuf action }
+  | eof
+      { fun action -> () }
+  | _
+      { split lexbuf }
+
+#ifdef JAPANESE
+and split_jis = parse
+    kanji kanji *
+      { fun action ->
+          let s = Lexing.lexeme lexbuf in
+          action ("\027$B" ^ adjust s 8 ^ "\027(B");
+          split_jis lexbuf action }
+  | katakana katakana katakana katakana *
+      { fun action ->
+          let s = Lexing.lexeme lexbuf in
+          action ("\027$B" ^ adjust s 12 ^ "\027(B");
+          split_jis lexbuf action }
+  | jis_char
+      { split_jis lexbuf }
+  | eof
+      { fun action -> () }
+  | jis_out
+      { split lexbuf }
+  | _
+      { split lexbuf }
+#endif
+
+{
+
+let iter action txt =
+  split (Lexing.from_string txt) action
+
+}
