@@ -78,16 +78,17 @@ let read_full filename =
     f_low_freq = low_freq; f_high_freq = high_freq }
 
 let temp_file basename =
+  let pid = Unix.getpid() in
   let rec tmpfile counter =
     if counter > 10000 then raise (Error "cannot create temporary database");
-    let filename = basename ^ string_of_int counter in
+    let filename = basename ^ string_of_int (pid + counter) in
     try
       (filename,
        open_out_gen [Open_wronly; Open_creat; Open_excl; Open_binary] 0o600
                     filename)
     with Sys_error _ ->
       tmpfile (counter + 1)
-  in tmpfile (Unix.getpid())
+  in tmpfile 0
 
 let write_full filename db =
   let basename, zip =
