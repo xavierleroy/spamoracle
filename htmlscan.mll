@@ -104,6 +104,11 @@ module Output = struct
         | "alt" -> add_extra ob s
         | _ -> ()
         end
+    | "font" ->
+        begin match String.lowercase n with
+          "face" | "color" -> add_extra ob s
+        | _ -> ()
+        end
     | _ -> ()     
 end
 
