@@ -1,5 +1,7 @@
                SpamOracle -- a spam classification tool
 
+                        Version 1.0 (alpha)
+
 OVERVIEW:
 
   SpamOracle is a tool to help detect and filter away "spam"
@@ -8,7 +10,7 @@ OVERVIEW:
   words with those found in a user-provided corpus of known spam and
   known legitimate e-mail.  The classification algorithm is based on
   Bayes' formula, and is described in Paul Graham's paper, "A plan for
-  spam", http://www.paulgraham.com/spam.html
+  spam", http://www.paulgraham.com/spam.html.  
 
   This program is designed to work in conjunction with procmail.
   The result of the analysis is output as an additional message header
@@ -24,7 +26,7 @@ OVERVIEW:
   which often indicate a virus.
 
 
-REQUIREMENTS:
+REQUIREMENTS AND LIMITATIONS:
 
 - To compile: Objective Caml, http://caml.inria.fr/
 
@@ -45,12 +47,22 @@ REQUIREMENTS:
     format (a la MH).  Other formats, such as Emacs' Babyl, are not
     supported.
 
+  . The notion of "word" used by SpamOracle is slanted towards Western
+    European languages, i.e. the ISO Latin-1 and Latin-9 character sets.
+    SpamOracle will not work well if you receive many legitimate e-mails
+    written in other character sets, such as Eastern Asian languages.
 
 INSTALLATION:
 
+  Edit the Makefile and change the definitions of the following variables
+  at the top of the file:
+    LANGUAGES    the languages you're interested in besides English
+    CPP          how to invoke the C preprocessor
+    BINDIR       where to install the executable
+
   Do "make" in this directory.
 
-  Copy the executable "spamoracle" to some directory in your search path.
+  Become superuser if necessary and do "make install".
 
 
 INITIALIZATION:
@@ -255,12 +267,38 @@ UPDATING THE DATABASE:
       spamoracle add -spam new_spam_mails
 
 
-CONCLUSIONS:
+TECHNICAL DETAILS:
 
-  By combining SpamOracle with simple procmail rules on attachment types
-  and character sets, I have observed a 3% false negative rate
-  (spams that are not filtered away) and 0.1% false positive rate
-  (legitimate mails that are filtered away).  This is much better
-  than my previous ad-hoc procmail filter, which had about 20% false
-  negatives and 1% false positives.  So, I'm basically happy and
-  can enjoy the bright side of e-mail again :-)
+  SpamOracle's notion of "word" is any run of 3 to 12 of the following
+  characters: letters, digits, single quotes, dashes (-), dollar and
+  percent signs.  If support for non-English european languages was
+  compiled in, word characters also include the relevant accented letters 
+  for the languages in question, plus the Euro sign.  All words are
+  mapped to lowercase, and accented letters are mapped to the corresponding
+  non-accented letters.
+
+  In addition, a run of three or more uppercase letters generates a
+  pseudo-word "Un" where n is the length of the run.  Similarly,
+  a run of three or more non-ASCII characters (code >= 128) generates
+  a pseudo-word "Wn" where n is the length of the run.
+
+  For instance, the following text:
+
+      SUMMER in English is written "été" in French ¹²³
+
+  is processed into the following words, assuming French support was selected:
+
+      U5 summer english written ete french W3
+
+  and if French support was not selected:
+
+      U5 summer english written french W3
+
+  For your edification and entertainment, the contents of the database
+  can be dumped with the "spamoracle list <regexp>" command, where <regexp>
+  is an Emacs-style regexp specifying the words you're interested in, e.g.:
+
+      spamoracle list '.*'     # show all words -- big list!
+      spamoracle list 'sex.*'
+      spamoracle list 'caml.*'
+
