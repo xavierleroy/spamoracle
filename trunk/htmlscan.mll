@@ -113,10 +113,7 @@ let unquotedattrib =
   [^ '\'' '\"' '>' ' ' '\n' '\r' '\t'] [^ '>' ' ' '\n' '\r' '\t']*
 
 rule main = parse
-    "<!" ['D' 'd']['O' 'o']['C' 'c']['T' 't']['Y' 'y']['P' 'p']['E' 'e']
-         [^ '>'] * '>'
-      { main lexbuf }
-  | "<!--"
+    "<!"                        (* tolerance *)
       { comment lexbuf; main lexbuf }
   | "<" name
       { let s = Lexing.lexeme lexbuf in
@@ -145,7 +142,7 @@ rule main = parse
       { Output.contents ob }
 
 and comment = parse
-    "--" ws* ">"
+    ">"                         (* tolerance *)
       { () }
   | _                           (* tolerance *)
       { comment lexbuf }
