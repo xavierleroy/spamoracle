@@ -1,7 +1,7 @@
 ### Configuration section
 
 # The laguages you're interested in, besides English
-LANGUAGES=-DFRENCH #-DSPANISH -DITALIAN -DGERMAN
+LANGUAGES=-DFRENCH #-DSPANISH -DITALIAN -DGERMAN -DPORTUGUESE
 
 # How to invoke the C preprocessor
 CPP=gcc -E -P $(LANGUAGES) -
