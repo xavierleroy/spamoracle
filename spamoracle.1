@@ -616,6 +616,33 @@ U5 summer english written french W3
 .RE
 .fi
 
+.SH RANDOM NOTES
+
+The database file can be compressed with
+.BR gzip (1)
+to save disk space, at the expense of slower 
+.B spamoracle
+operations.  If the database file specified with the
+.B -f
+option has the extension
+.BR .gz ,
+.B spamoracle
+will automatically uncompress it on start-up, and re-compress it after
+updates.
+
+If your mail is stored in MH format, you may run into "command line
+too long" errors while trying to process a lot of small files with the
+.B spamoracle add
+command, e.g. when doing
+.br
+.B spamoracle add -good archives/*/* -spam spam/*
+.br
+Instead, do something like:
+.br
+.B find archives -type f -print | xargs spamoracle add -good
+.br
+.B find spam -type f -print | xargs spamoracle add -spam
+
 .SH AUTHOR
 Xavier Leroy <Xavier.Leroy@inria.fr>
 
@@ -630,3 +657,4 @@ Xavier Leroy <Xavier.Leroy@inria.fr>
 
 .B http://www.paulgraham.com/spam.html
 (Paul Graham's seminal paper)
+
