@@ -182,7 +182,7 @@ let header_matches s re msg =
   in hmatch msg.headers
 
 let re_content_text =
-  Str.regexp_case_fold "text/plain\\|text/enriched\\|text$"
+  Str.regexp_case_fold "text/plain\\|text/enriched\\|text;\\|text$"
 let re_content_html =
   Str.regexp_case_fold "text/html"
 let re_content_message_rfc822 =
