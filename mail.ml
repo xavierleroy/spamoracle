@@ -185,17 +185,37 @@ let message_matches re m =
   let content_type = header "content-type:" m in
   Str.string_match re content_type 0
 
+let choose_in_multipart parts =
+  let rec choose pure other = function
+    [] -> (pure, other)
+  | m :: rem ->
+      if message_matches re_content_pure_text m then
+        choose (Some m) other rem
+      else if message_matches re_content_text m then
+        choose pure (Some m) rem
+      else
+        choose pure other rem in
+  (* Favor text-only, unless much smaller than HTML
+     (many spams are fake alternatives with nearly empty text part *)
+  match choose None None (List.rev parts) with
+    (Some pure, Some other) ->
+      if String.length pure.body >= String.length other.body / 4
+      then Some pure
+      else Some other
+  | (Some pure, _) -> Some pure
+  | (_, Some other) -> Some other
+  | (_, _) -> None
+
 let rec iter_text_parts fn m =
   let content_type = header "content-type:" m in
   if Str.string_match re_content_text content_type 0 then
     fn m
-  else if Str.string_match re_content_multipart_alternative content_type 0 then
-    begin try
-      fn (List.find (message_matches re_content_pure_text) m.parts)
-    with Not_found -> try
-      fn (List.find (message_matches re_content_text) m.parts)
-    with Not_found -> ()
-    end
+  else if Str.string_match re_content_multipart_alternative content_type 0 
+  then begin
+    match choose_in_multipart m.parts with
+      None -> ()
+    | Some m -> fn m
+  end
   else if Str.string_match re_content_multipart content_type 0 then
     List.iter (iter_text_parts fn) m.parts
   else
