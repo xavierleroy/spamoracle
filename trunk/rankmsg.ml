@@ -75,16 +75,16 @@ let process_msg ctx m =
   iter_message (process_words ctx) m
 
 (* This is Graham's original approach *)
-(*
+
 let spaminess_score res =
   let probs = List.map snd (Array.to_list res) in
   let prod = List.fold_left ( *. ) 1.0 probs
   and cprod = List.fold_left ( *. ) 1.0 (List.map (fun x -> 1.0 -. x) probs) in
   prod /. (prod +. cprod)
-*)
 
 (* This is Robinson's chi-square stuff *)
 
+(****
 let chi2_inverse m n =   (* chi2 inverse of 2m with 2n degrees *)
   let t = ref (exp (-. m)) in
   let s = ref !t in
@@ -111,6 +111,7 @@ let spaminess_score res =
   let probs = Array.map snd res in
   let cprobs = Array.map (fun x -> 1.0 -. x) probs in
   0.5 *. (1.0 +. chi2_hypothesis probs -. chi2_hypothesis cprobs)
+****)
 
 type rank =
   { spam_prob: float;
