@@ -148,13 +148,13 @@ let main () =
       eprintf "%s\n" msg;
       eprintf "\
 Usage:
-  scrubmail [-f db] mark {mailbox}*
+  spamoracle [-f db] mark {mailbox}*
   Add 'X-Spam:' headers to messages with result of analysis
     -f <db>      Database to use (default $HOME/.mailscrubber.db)
     {mailbox}*   Mailboxes containing messages to markup
                  If none given, read single msg from standard input
 
-  scrubmail [-f db] add [-v] -spam {spambox}* -good {goodbox}*
+  spamoracle [-f db] add [-v] -spam {spambox}* -good {goodbox}*
   Create or update database with known spam or non-spam messages
     -f <db>      Database to use (default $HOME/.mailscrubber.db)
     -v           Print progress bar
@@ -164,14 +164,14 @@ Usage:
     {goodbox}*   Mailboxes containing good messages (not spam)
                  If no mailbox given, read single msg from standard input
 
-  scrubmail [-f db] test [-min prob] [-max prob] {mailbox}*
+  spamoracle [-f db] test [-min prob] [-max prob] {mailbox}*
   Analyze messages and print summary of results
     -f <db>      Database to use (default $HOME/.mailscrubber.db)
     -min <prob>  Don't print messages with result below <prob>   
     -max <prob>  Don't print messages with result above <prob>   
     {mailbox}*   Mailboxes containing messages to analyze
 
-  scrubmail [-f db] list {regexp}*
+  spamoracle [-f db] list {regexp}*
   Dump word statistics in database
     -f <db>      Database to use (default $HOME/.mailscrubber.db)
     {regexp}*    Regular expression for words we are interested in
