@@ -38,14 +38,19 @@ let add_word w p res =
     res.(!i) <- (w, p)
   end
 
+let normalize (p : float) low high =
+  if p > high then high else if p < low then low else p
+
 let process_word (db, res) w =
   try
     let (g, b) = Hashtbl.find db.s_freq w in
-    if word_count_in w res < 2 then begin
+    if word_count_in w res < !Config.max_repetitions then begin
       let g = 2 * g in
       let pgood = float g /. float db.s_num_good
       and pbad = float b /. float db.s_num_spam in
-      let p = max 0.01 (min 0.99 (pbad /. (pgood +. pbad))) in
+      let p = 
+        normalize (pbad /. (pgood +. pbad)) 
+                  !Config.low_freq_limit !Config.high_freq_limit in
       add_word w p res
     end
   with Not_found ->
@@ -55,12 +60,7 @@ let process_words ctx txt =
   Wordsplit.iter (process_word ctx) txt
 
 let process_msg ctx m =
-  iter_text_parts
-    (fun m ->
-      process_words ctx (header "from:" m);
-      process_words ctx (header "subject:" m);
-      process_words ctx m.body)
-    m
+  iter_message (process_words ctx) m
 
 let bayes_rule res =
   let probs = List.map snd (Array.to_list res) in
@@ -74,7 +74,7 @@ type rank =
     explanation: string }
 
 let rank_message db msg =
-  let res = Array.make 15 ("", 0.5) in
+  let res = Array.make !Config.num_words_retained ("", 0.5) in
   process_msg (db, res) msg;
   let p = bayes_rule res in
   let meaningful = ref 0 in

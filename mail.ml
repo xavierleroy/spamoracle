@@ -203,3 +203,11 @@ let rec iter_text_parts fn m =
     iter_text_parts fn (parse_message m.body)
   else
     ()
+
+let iter_message fn msg =
+  List.iter
+    (fun (h, v) -> if Str.string_match !Config.mail_headers h 0 then fn v)
+    msg.headers;
+  iter_text_parts
+    (fun m -> fn m.body)
+    msg

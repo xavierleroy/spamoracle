@@ -20,7 +20,8 @@ OCAMLLEX=ocamllex
 OCAMLDEP=ocamldep
 OCAMLOPT=ocamlopt
 
-BYTEOBJS=htmlscan.cmo mail.cmo database.cmo mbox.cmo wordsplit.cmo \
+BYTEOBJS=configfile.cmo config.cmo \
+  htmlscan.cmo mail.cmo database.cmo mbox.cmo wordsplit.cmo \
   rankmsg.cmo attachments.cmo processing.cmo main.cmo
 BYTELIBS=unix.cma str.cma
 
