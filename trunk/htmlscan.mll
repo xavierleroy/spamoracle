@@ -215,14 +215,6 @@ and entity_end = parse
     ";" ?
       { () }
 
-and decode_attribute ob = parse
-    '&'
-      { Buffer.add_char ob (entity lexbuf); decode_attribute ob lexbuf }
-  | [^ '&']+ as s
-      { Buffer.add_string ob s; decode_attribute ob lexbuf }
-  | eof
-      { Buffer.contents ob }
-
 {
 let extract_text s =
   Output.clear ob; main (Lexing.from_string s)
