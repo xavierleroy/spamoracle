@@ -1,0 +1,9 @@
+Release 1.2:
+- When choosing part of a multipart/alternative, ignore pure text part
+  if much smaller than HTML part.
+
+Release 1.1:
+- Fixed "usage" message
+
+Release 1.0:
+- First public release
