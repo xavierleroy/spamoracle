@@ -1,6 +1,8 @@
 Release 1.2:
 - When choosing part of a multipart/alternative, ignore pure text part
   if much smaller than HTML part.
+- Added commands "dump" and "restore" to facilitate future evolution
+  towards other database formats.
 
 Release 1.1:
 - Fixed "usage" message
