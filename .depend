@@ -2,8 +2,10 @@ attachments.cmo: mail.cmi attachments.cmi
 attachments.cmx: mail.cmx attachments.cmi 
 database.cmo: database.cmi 
 database.cmx: database.cmi 
-mail.cmo: mail.cmi 
-mail.cmx: mail.cmi 
+htmlscan.cmo: htmlscan.cmi 
+htmlscan.cmx: htmlscan.cmi 
+mail.cmo: htmlscan.cmi mail.cmi 
+mail.cmx: htmlscan.cmx mail.cmi 
 main.cmo: database.cmi mbox.cmi processing.cmi 
 main.cmx: database.cmx mbox.cmx processing.cmx 
 mbox.cmo: mbox.cmi 

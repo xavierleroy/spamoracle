@@ -44,7 +44,7 @@ spamoracle \- a spam classification tool
 .B spamoracle
 .RB [ \-f
 .IR database ]
-.B dump
+.B backup
 .B >
 .I backupfile
 
@@ -241,7 +241,7 @@ and character set
 .B "GB2312"
 (an encoding for Chinese).
 
-Normally, when running "
+Normally, when running
 .BR "spamoracle test goodmails" ,
 most messages should come out with low score (0.2 or less), and when running
 .BR "spamoracle test spammails" ,
@@ -283,8 +283,9 @@ or not well categorized...
 .SH "MARKING AND FILTERING INCOMING E-MAIL"
 
 Once the database is built, you're ready to run incoming e-mails
-through SpamOracle.  The command "spamoracle mark" reads
-one e-mail from standard input, and copies it to standard output,
+through SpamOracle.  The command
+.B spamoracle mark
+reads one e-mail from standard input, and copies it to standard output,
 with two headers inserted: 
 .B "X-Spam:"
 and
@@ -395,7 +396,7 @@ some procmail rules for that:
 .nf
 .sp
 :0
-* ^X-Attachments:.*name=".*\\.(pif|scr|exe|bat)"
+* ^X-Attachments:.*name=".*\\.(pif|scr|exe|bat|com)"
 spambox
 
 :0
@@ -449,7 +450,7 @@ Another option is to collect more known spams or more known good
 messages into mailbox files, and once in a while do
 .B spamoracle add -good new_good_mails
 or
-.BR spamoracle add -spam new_spam_mails .
+.BR "spamoracle add -spam new_spam_mails" .
 
 .SH "QUERYING THE DATABASE"
 
@@ -480,7 +481,7 @@ versions of SpamOracle.  To facilitate backups and upgrades, the
 database contents can also be manipulated in a portable, text format.
 
 The
-.B "spamoracle dump"
+.B "spamoracle backup"
 command dumps the contents of the database to
 standard output, in a textual, portable format.
 
@@ -495,7 +496,7 @@ The recommended procedure for upgrading to a newer version of SpamOracle is:
 .nf
 .sp
 # Before the upgrade:
-spamoracle dump > backupfile
+spamoracle backup > backupfile
 # Upgrade SpamOracle
 # Restore the database
 spamoracle restore < backupfile
