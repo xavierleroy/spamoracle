@@ -248,6 +248,8 @@ let main () =
       exit 2
   | Sys_error msg ->
       eprintf "System error: %s\n" msg
+  | Database.Error msg ->
+      eprintf "%s\n" msg
 
 let _ = main()
 
