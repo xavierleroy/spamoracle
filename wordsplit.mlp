@@ -57,10 +57,17 @@ let all_uppercase s =
 let adjust s n =
   if String.length s <= n then s else String.sub s 0 n
 
+let unstretch s =
+  let t = String.create ((String.length s + 1) / 2) in
+  for i = 0 to String.length t - 1 do
+    t.[i] <- s.[i + i]
+  done;
+  t
+
 }
 
-let word_constituent = [
-   'a'-'z' 'A'-'Z' '-' '\''
+let letter = [
+   'a'-'z' 'A'-'Z'
 #ifdef FRENCH
    'À' 'Â' 'Ç' 'È' 'É' 'Ê' 'Ë' 'Î' 'Ï' 'Ô' 'Ù' 'Û' 'Ü'
    'à' 'â' 'ç' 'è' 'é' 'ê' 'ë' 'î' 'ï' 'ô' 'ù' 'û' 'ü' 'ÿ'
@@ -82,6 +89,10 @@ let word_constituent = [
    'à' 'á' 'â' 'ã' 'ç' 'é' 'ê' 'í' 'ó' 'ô' 'õ' 'ú' 'ü'
 #endif
 ]
+
+let word_constituent = letter | ['-' '\'']
+
+let stretcher = [' ' '-' '_' '.']
 
 let numeric = ['0'-'9' '.' ',' '$' '%' '\164' (* Euro *)]
 
@@ -108,7 +119,14 @@ let jis_out =
 #endif
 
 rule split = parse
-    word_constituent word_constituent word_constituent word_constituent *
+    letter stretcher letter stretcher letter (stretcher letter) *
+      { fun action ->
+          let s = unstretch (Lexing.lexeme lexbuf) in
+          if all_uppercase s then
+            action ("U" ^ string_of_int (String.length s));
+          if String.length s <= 12 then (normalize s; action s);
+          split lexbuf action }
+  | word_constituent word_constituent word_constituent word_constituent *
       { fun action ->
           let s = Lexing.lexeme lexbuf in
           if all_uppercase s then
