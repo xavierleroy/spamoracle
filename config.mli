@@ -44,6 +44,9 @@ val robinson_s : float ref
 val robinson_x : float ref
   (** Robinson's parameters for taking word frequencies into account. *)
 
+val use_chi_square : bool ref
+  (** Use Robinson's chi-square test *)
+
 val min_meaningful_words : int ref
   (** Number of meaningful words below which mails are classified as unknown *)
 val good_mail_prob : float ref

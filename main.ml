@@ -144,11 +144,11 @@ let stat_command args =
     let percentage a b =
       100.0 *. float a /. float b in
     if !num_msgs > 0 then
-      printf "%s: %.2f%% good, %.2f%% unknown, %.2f%% spam\n"
+      printf "%s: %d (%.2f%%) good, %d (%.2f%%) unknown, %d (%.2f%%) spam\n"
              f 
-             (percentage !num_good !num_msgs)
-             (percentage !num_unknown !num_msgs)
-             (percentage !num_spam !num_msgs)
+             !num_good (percentage !num_good !num_msgs)
+             !num_unknown (percentage !num_unknown !num_msgs)
+             !num_spam (percentage !num_spam !num_msgs)
   in List.iter stat_mbox args
 
 let words_command args =

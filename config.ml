@@ -24,11 +24,13 @@ let num_words_retained = ref 15
 
 let max_repetitions = ref 2
 
-let robinson_s = ref 1.0
+let robinson_s = ref 0.0
 let robinson_x = ref 0.5
 
-let low_freq_limit = ref 0.001
-let high_freq_limit = ref 0.999
+let low_freq_limit = ref 0.01
+let high_freq_limit = ref 0.99
+
+let use_chi_square = ref false
 
 let good_mail_prob = ref 0.2
 let spam_mail_prob = ref 0.8
@@ -58,6 +60,9 @@ let options = [
   "high_freq_limit", Float high_freq_limit;
   "min_meaningful_words", Int min_meaningful_words;
   "good_mail_prob", Float good_mail_prob;
-  "spam_mail_prob", Float spam_mail_prob
+  "spam_mail_prob", Float spam_mail_prob;
+  "robinson_s", Float robinson_s;
+  "robinson_x", Float robinson_x;
+  "use_chi_square", Bool use_chi_square
 ]
 
