@@ -25,7 +25,7 @@ let read_short filename =
   check_magic filename ic;
   let ng = input_binary_int ic in
   let ns = input_binary_int ic in
-  let freq = input_value ic in
+  let freq = Marshal.from_channel ic in
   close_in ic;
   { s_num_good = ng; s_num_spam = ns; s_freq = freq }
 
@@ -34,8 +34,8 @@ let read_full filename =
   check_magic filename ic;
   let ng = input_binary_int ic in
   let ns = input_binary_int ic in
-  let high_freq = input_value ic in
-  let low_freq = input_value ic in
+  let high_freq = Marshal.from_channel ic in
+  let low_freq = Marshal.from_channel ic in
   close_in ic;
   { f_num_good = ng; f_num_spam = ns; 
     f_low_freq = low_freq; f_high_freq = high_freq }
@@ -48,8 +48,8 @@ let write_full filename db =
   output_string oc magic;
   output_binary_int oc db.f_num_good;
   output_binary_int oc db.f_num_spam;
-  output_value oc db.f_high_freq;
-  output_value oc db.f_low_freq;
+  Marshal.to_channel oc db.f_high_freq [Marshal.No_sharing];
+  Marshal.to_channel oc db.f_low_freq [Marshal.No_sharing];
   close_out oc;
   Sys.rename tempname filename
 
