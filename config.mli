@@ -58,5 +58,7 @@ val summarize_referenced : bool ref
 
 val referenced_header : string ref
 
+val reassemble_words : bool ref
+
 val options : (string * Configfile.value) list
   (** List of configurable parameters *)

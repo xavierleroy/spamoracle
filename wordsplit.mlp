@@ -151,7 +151,7 @@ rule split = parse
           let l = String.length s in
           if l >= 3 && all_uppercase s then action ("U" ^ string_of_int l);
           normalize s;
-          reassemble db action s;
+          if !Config.reassemble_words then reassemble db action s;
           if l >= 3 && l <= maxlen then action s;
           split lexbuf db action }
   | numeric numeric numeric numeric *
