@@ -34,28 +34,50 @@ let check_magic filename ic =
   really_input ic buf 0 (String.length magic);
   if buf <> magic then raise(Sys_error(filename ^ ": bad magic number"))
 
+type db_chan = {zipped : bool ; ic : in_channel}
+
+let open_db filename =
+  if Filename.check_suffix filename ".gz" then
+    { ic = Unix.open_process_in ("gunzip -c " ^ filename);
+      zipped = true; }
+  else
+    { ic = open_in_bin filename ;
+      zipped = false }
+
+let close_db {zipped = zipped ; ic = ic } =
+  if zipped then begin
+    let _ = Unix.close_process_in ic in
+    ()
+  end else
+    close_in ic
+
 let read_short filename =
-  let ic = open_in_bin filename in
+  let {ic=ic ; zipped=zipped} as db_ic = open_db filename in
   check_magic filename ic;
   let ng = input_binary_int ic in
   let ns = input_binary_int ic in
   let freq = Marshal.from_channel ic in
-  close_in ic;
+  close_db db_ic;
   { s_num_good = ng; s_num_spam = ns; s_freq = freq }
 
 let read_full filename =
-  let ic = open_in_bin filename in
+  let {ic=ic ; zipped=zipped} as db_ic = open_db filename in
   check_magic filename ic;
   let ng = input_binary_int ic in
   let ns = input_binary_int ic in
   let high_freq = Marshal.from_channel ic in
   let low_freq = Marshal.from_channel ic in
-  close_in ic;
+  close_db db_ic;
   { f_num_good = ng; f_num_spam = ns; 
     f_low_freq = low_freq; f_high_freq = high_freq }
 
 let write_full filename db =
-  let tempname = filename ^ ".tmp" in
+  let basename, zip =
+    if Filename.check_suffix filename ".gz" then
+      Filename.chop_suffix filename ".gz", true
+    else
+      filename, false in
+  let tempname = basename ^ ".tmp" in
   let oc =
     open_out_gen [Open_wronly; Open_trunc; Open_creat; Open_binary] 0o600
                  tempname in
@@ -65,7 +87,15 @@ let write_full filename db =
   Marshal.to_channel oc db.f_high_freq [Marshal.No_sharing];
   Marshal.to_channel oc db.f_low_freq [Marshal.No_sharing];
   close_out oc;
-  Sys.rename tempname filename
+  if zip then begin
+    let r = Sys.command ("gzip -best " ^ tempname) in
+    if r = 0 then
+      Sys.rename (tempname ^ ".gz") filename
+    else
+      Sys.rename tempname basename
+  end else
+    Sys.rename tempname filename 
+
 
 let create sz =
   { f_num_good = 0;
