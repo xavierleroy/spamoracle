@@ -1,0 +1,574 @@
+.TH SPAMORACLE 1
+
+.SH NAME
+spamoracle \- a spam classification tool
+
+.SH SYNOPSIS
+
+.B spamoracle
+.RB [ \-f
+.IR database ]
+.B mark
+[
+.I mailbox ...
+]
+
+.B spamoracle
+.RB [ \-f
+.IR database ]
+.B add
+.RB [ \-v ]
+.B \-spam
+.I spambox ...
+.B \-good
+.I goodbox ...
+
+.B spamoracle
+.RB [ \-f
+.IR database ]
+.B test
+.RB [ \-min
+.IR prob ]
+.RB [ \-max
+.IR prob ]
+[
+.I spambox ...
+]
+
+.B spamoracle
+.RB [ \-f
+.IR database ]
+.B list
+.I regexp ...
+
+.B spamoracle
+.RB [ \-f
+.IR database ]
+.B dump
+.B >
+.I backupfile
+
+.B spamoracle
+.RB [ \-f
+.IR database ]
+.B restore
+.B <
+.I backupfile
+
+.SH DESCRIPTION
+
+SpamOracle is a tool to help detect and filter away "spam"
+(unsolicited commercial e-mail).  It proceeds by statistical analysis
+of the words that appear in the e-mail, comparing the frequencies of
+words with those found in a user-provided corpus of known spam and
+known legitimate e-mail.  The classification algorithm is based on
+Bayes' formula, and is described in Paul Graham's paper, 
+.IR "A plan for spam" ,
+.BR http://www.paulgraham.com/spam.html .
+
+This program is designed to work in conjunction with
+.BR procmail (1).
+The result of the analysis is output as an additional message header
+.B "X-Spam:"
+followed by 
+.BR "yes" ,
+.B "no"
+or
+.BR "unknown" ,
+plus additional details.  A procmail rule can then test this 
+.B "X-Spam:"
+header and deliver the e-mail to the appropriate mailbox.
+
+In addition, SpamOracle also also analyses MIME attachments,
+extracting relevant information such as MIME type, character encoding
+and attached file name, and summarizing them in an additional
+.B "X-Attachments:"
+header.  This allows procmail to easily reject
+e-mails containing suspicious attachments, e.g. Windows executables
+which often indicate a virus.
+
+.SH "REQUIREMENTS AND LIMITATIONS"
+
+To use SpamOracle, your mail must be delivered to a Unix machine on which
+you have a shell account.  This machine must have
+.BR procmail (1)
+(see
+.BR http://www.procmail.org/ ) installed.  
+Your
+.B "~/.forward"
+file must be set up to run all incoming e-mail through 
+.BR procmail (1).
+If your mail server supports the POP or IMAP protocols, you can also use
+.BR fetchmail (1)
+to fetch your mail from the server and have it delivered to your local machine.
+
+To provide the corpus of messages from which SpamOracle "learns",
+an archive of about 1000 of your e-mails is needed.
+The archive must be manually or semi-automatically split into
+known spams and known good messages.  Mis-classified messages
+in the corpus (e.g. spams mistakenly stored among the good messages)
+will decrease the efficiency of the classification.  The archive
+must be in Unix mailbox format, or in "one message per file"
+format (a la MH).  Other formats, such as Emacs' Babyl, are not
+supported.
+
+The notion of "word" used by SpamOracle is slanted towards Western
+European languages, i.e. the ISO Latin-1 and Latin-9 character sets.
+SpamOracle will not work well if you receive many legitimate e-mails
+written in other character sets, such as Eastern Asian languages.
+
+.SH INITIALIZATION
+
+To build the database of word frequencies from the corpus, do:
+.RS
+.ft 3
+.nf
+.sp
+rm ~/.spamoracle.db
+spamoracle add -v -good goodmails -spam spammails
+.ft
+.LP
+.RE
+.fi
+By default, the database is stored in the file
+.B ".spamoracle.db"
+in your home directory.  This can be overriden with the 
+.B -f
+option:
+.BI "spamoracle -f mydatabase add" " ..."
+The 
+.B \-v
+option prints progress information during the processing of the corpus.
+     
+This assumes that the good, non-spam messages from the corpus are
+stored in the file 
+.BR goodmails ,
+and the known spam messages in the file
+.BR spammails .
+You can also fetch corpus messages from several files, and/or process them 
+via several invocations of SpamOracle:
+.RS
+.ft 3
+.nf
+.sp
+spamoracle add -good goodmails1 ... goodmailsN
+spamoracle add -spam spammails1 ... spammailsP
+.ft
+.LP
+.RE
+.fi
+
+.SH "TESTING THE DATABASE"
+
+To check that the database was built correctly, and familiarize
+yourself with the statistical analysis performed by SpamOracle, 
+invoke the "test" mode on the mailboxes that you just used for building
+the corpus:
+.RS
+.ft 3
+.nf
+.sp
+spamoracle test goodmails | more
+spamoracle test spammails | more
+.ft
+.LP
+.RE
+.fi
+For each message in the given mailboxes, you'll see a summary like this:
+.RS
+.ft 3
+.nf
+.sp
+ From: bbo <midhack@ureach.com>
+ Subject: Check This Out
+ Score: 1.00 -- 15
+ Details: refid:98 $$$$:98 surfing:98 asp:95 click:93 cable:92
+   instantly:90 https:88 internet:87 www:86 U4:85 isn't:14 month:81
+   com:75 surf:75 
+Attachments: cset="GB2312" type="application/octet-stream"
+   name="Guangwen4.zip" 
+.ft
+.LP
+.RE
+.fi
+The first two lines are just the
+.B From:
+and
+.B Subject:
+fields of the original message.
+
+The 
+.B "Score:"
+line summarizes the result of the analysis.
+The first number (between 0.0 and 1.0) is the probability that the
+message is actually spam --- or, equivalently, the degree of similarity
+of the message with the spam messages in the corpus.
+The second number (an integer between 0 and 15) is the number of
+"interesting" words found in the message.  "Interesting" words are
+those that occur at least 5 times in the corpus.
+In the example, we have 15 interesting words (the maximum) and a
+score of 1.00, indicating a spam with high certainty.
+
+The
+.B "Details:"
+line provides an explanation of the score.  It lists
+the 15 most interesting words found in the message, that is, the 15
+interesting words whose probability of denoting a spam is farthest
+away from the neutral 0.5.  Each word is given with its individual score,
+written as a percentage (between 01 and 99) rather than as a
+probability so as to save space.  Here, we see a number of very
+"spammish" words such as
+.B "$$$$"
+or
+.BR "click" ,
+with probability 0.98
+and 0.93 respectively, and a few "innocent" words such as
+.B "isn't"
+(probability 0.14).  The
+.B "U4" 
+word with probability 0.85 is actually
+a pseudo-word representing a 4-letter word all in uppercase --
+something spammers are fond of.
+
+The
+.B "Attachments:"
+line summarizes some information about MIME 
+attachments for this message.  Here, we have one attachment of type
+.BR "application/octect-stream" ,
+file name
+.BR "Guangwen4.zip" ,
+and character set
+.B "GB2312"
+(an encoding for Chinese).
+
+Normally, when running "
+.BR "spamoracle test goodmails" ,
+most messages should come out with low score (0.2 or less), and when running
+.BR "spamoracle test spammails" ,
+most messages should come out with a
+high score (0.8 or more).  If not, your corpus isn't very good,
+or not well classified into spam and non-spam.  To quickly see
+the outliers, you can reduce the interval of scores for which
+message summaries are displayed, as follows:
+.RS
+.ft 3
+.nf
+.sp
+spamoracle test -min 0.2 goodmails | more
+       # Shows only good mails with score >= 0.2
+spamoracle test -max 0.8 spammails | more
+       # Shows only spam mails with score <= 0.8
+.ft
+.LP
+.RE
+.fi
+Now, for a more challenging test, take a mailbox that contains
+unfiltered e-mails, i.e. a mixture of spam and legitimate e-mails,
+and run it through SpamOracle:
+.RS
+.ft 3
+.nf
+.sp
+spamoracle test mymailbox | less
+.ft
+.LP
+.RE
+.fi
+Marvel at how well the oracle recognizes spam from the rest!
+If the result isn't that marvelous to you, keep in mind that
+certain spams are just too short to be recognized (not enough
+significant words).  Also, perhaps your corpus was too small,
+or not well categorized...
+
+.SH "MARKING AND FILTERING INCOMING E-MAIL"
+
+Once the database is built, you're ready to run incoming e-mails
+through SpamOracle.  The command "spamoracle mark" reads
+one e-mail from standard input, and copies it to standard output,
+with two headers inserted: 
+.B "X-Spam:"
+and
+.BR "X-Attachments:" .
+The
+.B "X-Spam:"
+header has one the following formats:
+
+.B "   X-Spam: yes;
+.IB score ;
+.I details
+
+or
+
+.B "   X-Spam: no;
+.IB score ;
+.I details
+
+or
+
+.B "   X-Spam: unknown;
+.IB score ;
+.I details
+
+The
+.I score
+and
+.I details
+are as described for
+.BR "spamoracle test" .
+
+The 
+.BR "yes" / "no" / "unknown"
+tag synthesizes the results of the analysis:
+.B "yes"
+means that the score is >= 0.8 and at least 5 interesting words were found;
+.B "no"
+means that the score is <= 0.2 and at least 5 interesting words were found;
+.B "unknown"
+is returned otherwise.  The
+.B "unknown"
+case generally occurs for very short messages, where not enough
+interesting words were found.
+
+The 
+.B "X-Attachments:"
+header contains the same information as
+the 
+.B "Attachments:"
+output of
+.BR "spamoracle test" ,
+that is, a summary of the message attachments.
+
+To process automatically your incoming e-mail through SpamOracle
+and act upon the results of the analysis, just insert the following
+"recipes" in the file ~/.procmailrc:
+
+.RS
+.ft 3
+.nf
+.sp
+:0fw
+| /usr/local/bin/spamoracle mark
+
+:0
+* ^X-Spam: yes;
+spambox
+.ft
+.LP
+.RE
+.fi
+
+What these cryptic commands mean is:
+
+- Run every mail through the
+.B "spamoracle mark"
+command.
+(If spamoracle wasn't installed in /usr/local/bin, adjust the path
+as necessary.)  This adds two headers to the message:
+.B "X-Spam:"
+and
+.BR "X-Attachments:" ,
+describing the results of the spam analysis and the attachment analysis.
+
+- If we have an
+.B "X-Spam: yes"
+header, deliver the message to the file
+.B "spambox"
+rather than to your regular mailbox.  Presumably,
+you'll read
+.B "spambox"
+once in a while, but less often than your regular mailbox.
+Daring users can put
+.B "/dev/null"
+instead of
+.B "spambox"
+to just throw away the message, but please don't do that until
+you've used SpamOracle for a while and are happy with the results.
+SpamOracle's false positive rate (i.e. legitimate mails
+classified as spam) is low (0.1%) but not null.
+So, better save the presumed spams somewhere, and scan them
+quickly from time to time.
+
+If you'd like to enjoy a bit of attachment-based filtering, here are
+some procmail rules for that:
+.RS
+.ft 3
+.nf
+.sp
+:0
+* ^X-Attachments:.*name=".*\\.(pif|scr|exe|bat)"
+spambox
+
+:0
+* ^X-Attachments:.*type="audio/(x-wav|x-midi)
+spambox
+
+:0
+* ^(Content-type:.*|X-Attachments:.*cset="|^Subject:.*=\\?)(ks_c|gb2312|iso-2|euc-|big5|windows-1251)
+spambox
+.ft
+.LP
+.RE
+.fi
+The first rule treats as spam every mail that has a Windows
+executable as attachment.  These mails are typically sent by viruses.
+The second rule does the same with attachments of type x-wav or x-midi.
+I never normally receive music by e-mail, however some popular
+e-mail viruses seem fond of these attachment types.
+The third rule treats as spam every mail that uses character
+encodings corresponding to Korean, Chinese, Japanese, and Cyrillic.
+
+.SH "UPDATING THE DATABASE"
+
+At any time, you can add more known spams or known legitimate
+messages to the database by using the
+.B "spamoracle add"
+command.
+
+For instance, if you find a spam message that was not classified
+as such, run it through
+.BR "spamoracle add -spam" ,
+so that SpamOracle can learn from its mistake.  (Without additional
+arguments, this command will read a single message from standard input
+and record it as spam.)  Under
+.BR mutt (1)
+for instance, just highlight the spam message and type
+.RS
+.ft 3
+.nf
+.sp
+|spamoracle add -spam
+.ft
+.LP
+.RE
+.fi
+Similarly, if you find a legitimate message while checking your
+spam box, run it through
+.BR "spamoracle add -good" .
+
+Another option is to collect more known spams or more known good 
+messages into mailbox files, and once in a while do
+.B spamoracle add -good new_good_mails
+or
+.BR spamoracle add -spam new_spam_mails .
+
+.SH "QUERYING THE DATABASE"
+
+For your edification and entertainment, the contents of the database
+can be queried by regular expressions.  The
+.BI "spamoracle list " regexp
+command lists all words in the database that match
+.I regexp
+(an Emacs-style regular expression), along with their number of
+occurrences in spam mail and in good mail.  For instance:
+.RS
+.ft 3
+.nf
+.sp
+spamoracle list '.*' # show all words -- big list!
+spamoracle list 'sex.*'
+spamoracle list 'linux.*'
+.ft
+.LP
+.RE
+.fi
+
+.SH "DATABASE BACKUPS"
+
+The database used by SpamOracle is stored in a compact, binary format that
+is not humanly readable.  Moreover, this format is subject to change in later
+versions of SpamOracle.  To facilitate backups and upgrades, the
+database contents can also be manipulated in a portable, text format.
+
+The
+.B "spamoracle dump"
+command dumps the contents of the database to
+standard output, in a textual, portable format.
+
+The
+.B "spamoracle restore"
+command reads such a dump from standard input
+and rebuilds the database with this data.
+
+The recommended procedure for upgrading to a newer version of SpamOracle is:
+.RS
+.ft 3
+.nf
+.sp
+# Before the upgrade:
+spamoracle dump > backupfile
+# Upgrade SpamOracle
+# Restore the database
+spamoracle restore < backupfile
+.ft
+.LP
+.RE
+.fi
+
+.SH "TECHNICAL DETAILS"
+
+SpamOracle's notion of "word" is any run of 3 to 12 of the following
+characters: letters, digits, single quotes, dashes (-), dollar and
+percent signs.  If support for non-English european languages was
+compiled in, word characters also include the relevant accented letters 
+for the languages in question, plus the Euro sign.  All words are
+mapped to lowercase, and accented letters are mapped to the corresponding
+non-accented letters.
+
+In addition, a run of three or more uppercase letters generates a
+pseudo-word
+.BI U n
+where
+.I n
+is the length of the run.  Similarly,
+a run of three or more non-ASCII characters (code >= 128) generates
+a pseudo-word
+.BI W n
+where
+.I n
+is the length of the run.
+
+For instance, the following text:
+.RS
+.ft 3
+.nf
+.sp
+SUMMER in English is written "été" in French ¹²³
+.ft
+.LP
+.RE
+.fi
+is processed into the following words, assuming French support was
+selected at compile-time:
+.RS
+.ft 3
+.nf
+.sp
+U5 summer english written ete french W3
+.ft
+.LP
+.RE
+.fi
+and if French support was not selected:
+.RS
+.ft 3
+.nf
+.sp
+U5 summer english written french W3
+.ft
+.LP
+.RE
+.fi
+
+.SH AUTHOR
+Xavier Leroy <Xavier.Leroy@inria.fr>
+
+.SH "SEE ALSO"
+
+.BR procmail (1);
+.BR fetchmail (1)
+
+.B http://cristal.inria.fr/~xleroy/software/
+(SpamOracle distribution site)
+
+.B http://www.paulgraham.com/spam.html
+(Paul Graham's seminal paper)
