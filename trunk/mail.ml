@@ -185,6 +185,8 @@ let message_matches re m =
   let content_type = header "content-type:" m in
   Str.string_match re content_type 0
 
+let meaningful_text_size_threshold = 200
+
 let choose_in_multipart m =
   let rec choose pure other = function
     [] -> (pure, other)
@@ -197,11 +199,11 @@ let choose_in_multipart m =
         choose pure other (List.rev m.parts @ rem)
       else
         choose pure other rem in
-  (* Favor text-only, unless much smaller than HTML
+  (* Favor text-only, unless very short
      (many spams are fake alternatives with nearly empty text part *)
   match choose None None (List.rev m.parts) with
     (Some pure, Some other) ->
-      if String.length pure.body >= String.length other.body / 4
+      if String.length pure.body >= meaningful_text_size_threshold
       then Some pure
       else Some other
   | (Some pure, _) -> Some pure
