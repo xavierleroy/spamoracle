@@ -24,8 +24,11 @@ let num_words_retained = ref 15
 
 let max_repetitions = ref 2
 
-let low_freq_limit = ref 0.01
-let high_freq_limit = ref 0.99
+let robinson_s = ref 1.0
+let robinson_x = ref 0.5
+
+let low_freq_limit = ref 0.001
+let high_freq_limit = ref 0.999
 
 let good_mail_prob = ref 0.2
 let spam_mail_prob = ref 0.8

@@ -80,13 +80,9 @@ let list_command args =
       let match_word w (g, s) =
         if Str.string_match re w 0 then begin
           let p =
-            if 2 * g + s < 5 then -1.0 else begin
-              let pgood = float (2 * g) /. float db.f_num_good
-              and pspam = float s /. float db.f_num_spam in
-              max !Config.low_freq_limit
-                  (min !Config.high_freq_limit
-                       (pspam /. (pgood +. pspam)))
-            end in
+            if 2 * g + s < 5
+            then -1.0
+            else Rankmsg.word_proba g s db.f_num_good db.f_num_spam in
           res := (w, p, g, s) :: !res
         end in
       Hashtbl.iter match_word db.f_high_freq;
@@ -156,15 +152,16 @@ let stat_command args =
   in List.iter stat_mbox args
 
 let words_command args =
+  let db = Database.read_short !Config.database_name in
   if args = [] then
-    wordsplit_message (read_single_msg stdin)
+    wordsplit_message db (read_single_msg stdin)
   else
     List.iter
       (fun f ->
         mbox_file_iter f
           (fun msg ->
             print_string "----------------------------------------\n";
-            wordsplit_message msg))
+            wordsplit_message db msg))
       args
 
 let backup_command () =

@@ -15,6 +15,10 @@
 (* Decompose a string into words. *)
 
 {
+(* Maximal length of a word *)
+
+let maxlen = 12
+
 (* Map uppercase to lowercase.  Remove ISO Latin 1 accents. *)
 
 let tbl = "\
@@ -40,6 +44,8 @@ let normalize s =
     s.[i] <- tbl.[Char.code s.[i]]
   done
 
+(* Check if a string is all uppercase characters *)
+
 let all_uppercase s =
   try
     for i = 0 to String.length s - 1 do
@@ -54,15 +60,37 @@ let all_uppercase s =
   with Exit ->
     false
 
+(* Take first n chars of string *)
+
 let adjust s n =
   if String.length s <= n then s else String.sub s 0 n
 
-let unstretch s =
-  let t = String.create ((String.length s + 1) / 2) in
-  for i = 0 to String.length t - 1 do
-    t.[i] <- s.[i + i]
-  done;
-  t
+(* Reassembly of stretched-out words *)
+
+let reassembly_buffer = String.create maxlen
+
+let previous_words = ref ([] : string list)
+
+let reassemble db action word =
+  let rec reass idx = function
+  | [] -> []
+  | hd :: tl ->
+      let l = String.length hd in
+      let idx = idx - l in
+      if idx < 0 then [] else begin
+        String.blit hd 0 reassembly_buffer idx l;
+        let w = String.sub reassembly_buffer idx (maxlen - idx) in
+        if db w then action w;
+        hd :: reass idx tl
+      end in
+  let l = String.length word in
+  if l >= maxlen then begin
+    previous_words := []
+  end else begin
+    let idx = maxlen - l in
+    String.blit word 0 reassembly_buffer idx l;
+    previous_words := word :: reass idx !previous_words
+  end
 
 }
 
@@ -90,15 +118,7 @@ let letter = [
 #endif
 ]
 
-let word_constituent = letter | ['-' '\'']
-
-let stretched_word =
-    letter ' ' letter ' ' letter ' ' letter (' ' letter) *
-  | letter '-' letter '-' letter '-' letter ('-' letter) *
-  | letter '_' letter '_' letter '_' letter ('_' letter) *
-  | letter '.' letter '.' letter '.' letter ('.' letter) *
-  | letter '*' letter '*' letter '*' letter ('*' letter) *
-  | letter '\'' letter '\'' letter '\'' letter ('\'' letter) *
+let word_constituent = letter | '\''
 
 let numeric = ['0'-'9' '.' ',' '$' '%' '\164' (* Euro *)]
 
@@ -125,55 +145,50 @@ let jis_out =
 #endif
 
 rule split = parse
-    stretched_word
-      { fun action ->
-          let s = unstretch (Lexing.lexeme lexbuf) in
-          if all_uppercase s then
-            action ("U" ^ string_of_int (String.length s));
-          if String.length s <= 12 then (normalize s; action s);
-          split lexbuf action }
-  | word_constituent word_constituent word_constituent word_constituent *
-      { fun action ->
+  | word_constituent +
+      { fun db action ->
           let s = Lexing.lexeme lexbuf in
-          if all_uppercase s then
-            action ("U" ^ string_of_int (String.length s));
-          if String.length s <= 12 then (normalize s; action s);
-          split lexbuf action }
+          let l = String.length s in
+          if l >= 3 && all_uppercase s then action ("U" ^ string_of_int l);
+          normalize s;
+          reassemble db action s;
+          if l >= 3 && l <= maxlen then action s;
+          split lexbuf db action }
   | numeric numeric numeric numeric *
-      { fun action ->
+      { fun db action ->
           let s = Lexing.lexeme lexbuf in
           if String.length s <= 8 then (normalize s; action s);
-          split lexbuf action }
+          split lexbuf db action }
 #ifdef JAPANESE
   | jis_in
       { split_jis lexbuf }
 #endif
   | weird_character weird_character weird_character weird_character *
-      { fun action ->
+      { fun db action ->
           let s = Lexing.lexeme lexbuf in
           action ("W" ^ string_of_int (String.length s));
-          split lexbuf action }
+          split lexbuf db action }
   | eof
-      { fun action -> () }
+      { fun db action -> () }
   | _
       { split lexbuf }
 
 #ifdef JAPANESE
 and split_jis = parse
     kanji kanji *
-      { fun action ->
+      { fun db action ->
           let s = Lexing.lexeme lexbuf in
           action ("\027$B" ^ adjust s 8 ^ "\027(B");
-          split_jis lexbuf action }
+          split_jis lexbuf db action }
   | katakana katakana katakana katakana *
-      { fun action ->
+      { fun db action ->
           let s = Lexing.lexeme lexbuf in
           action ("\027$B" ^ adjust s 12 ^ "\027(B");
-          split_jis lexbuf action }
+          split_jis lexbuf db action }
   | jis_char
       { split_jis lexbuf }
   | eof
-      { fun action -> () }
+      { fun db action -> () }
   | jis_out
       { split lexbuf }
   | _
@@ -182,7 +197,8 @@ and split_jis = parse
 
 {
 
-let iter action txt =
-  split (Lexing.from_string txt) action
+let iter action db txt =
+  previous_words := [];
+  split (Lexing.from_string txt) db action
 
 }

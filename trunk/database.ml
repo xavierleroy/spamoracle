@@ -194,3 +194,6 @@ let restore ic =
     ()
   end;
   db
+
+let in_short db w = Hashtbl.mem db.s_freq w
+let in_full  db w = Hashtbl.mem db.f_high_freq w

@@ -57,7 +57,7 @@ let record_words db is_spam txt =
   Wordsplit.iter
     (fun w ->
       if is_spam then add_spam db w else add_good db w)
-    txt
+    (in_full db) txt
 
 let add_message db verbose is_spam msg =
   if verbose then begin
@@ -104,13 +104,13 @@ let stat_message db txt =
 
 (* Word splitting *)
 
-let wordsplit_message txt =
+let wordsplit_message db txt =
   Format.open_hovbox 0;
   Mail.iter_message
     (fun txt ->
       Wordsplit.iter
         (fun word -> Format.print_string word; Format.print_space())
-        txt)
+        (in_short db) txt)
     (parse_message txt);
   Format.close_box();
   Format.print_newline()
