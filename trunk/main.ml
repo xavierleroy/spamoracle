@@ -21,12 +21,23 @@ open Processing
 
 exception Usage of string
 
-let database_name =
-  ref (try Filename.concat (Sys.getenv "HOME") ".spamoracle.db"
-       with Not_found -> ".spamoracle.db")
+let default_config_name =
+  try Filename.concat (Sys.getenv "HOME") ".spamoracle.conf"
+  with Not_found -> ".spamoracle.conf"
+
+let parse_config_file file =
+  try
+    let errs = Configfile.parse Config.options file in
+    if errs <> [] then begin
+      eprintf "Error while reading configuration file %s:\n" file;
+      List.iter (fun (line, msg) -> eprintf "Line %d: %s\n" line msg) errs;
+      exit 2
+    end
+  with Sys_error msg ->
+    eprintf "Cannot reading configuration file %s:\n%s\n" file msg
 
 let mark_command args =
-  let db = Database.read_short !database_name in
+  let db = Database.read_short !Config.database_name in
   if args = [] then
     mark_message db (read_single_msg stdin)
   else
@@ -35,7 +46,7 @@ let mark_command args =
 let add_command args =
   let db =
     try
-      Database.read_full !database_name
+      Database.read_full !Config.database_name
     with Sys_error _ ->
       Database.create 997 in
   let processed = ref false
@@ -58,10 +69,10 @@ let add_command args =
         if !verbose then
           printf "\r%6d / %6d  good / spam messages\n"
                  db.f_num_good db.f_num_spam
-  in parse_args args; Database.write_full !database_name db
+  in parse_args args; Database.write_full !Config.database_name db
 
 let list_command args =
-  let db = Database.read_full !database_name in
+  let db = Database.read_full !Config.database_name in
   let res = ref [] in
   List.iter
     (fun s ->
@@ -72,7 +83,9 @@ let list_command args =
             if 2 * g + s < 5 then -1.0 else begin
               let pgood = float (2 * g) /. float db.f_num_good
               and pspam = float s /. float db.f_num_spam in
-              max 0.01 (min 0.99 (pspam /. (pgood +. pspam)))
+              max !Config.low_freq_limit
+                  (min !Config.high_freq_limit
+                       (pspam /. (pgood +. pspam)))
             end in
           res := (w, p, g, s) :: !res
         end in
@@ -95,7 +108,7 @@ let list_command args =
   end
 
 let test_command args =
-  let db = Database.read_short !database_name in
+  let db = Database.read_short !Config.database_name in
   let low = ref 0.0 and high = ref 1.0 in
   let rec parse_args = function
     | "-min" :: s :: rem ->
@@ -119,7 +132,7 @@ let test_command args =
   in parse_args args
 
 let stat_command args =
-  let db = Database.read_short !database_name in
+  let db = Database.read_short !Config.database_name in
   let stat_mbox f =
     let num_msgs = ref 0
     and num_good = ref 0
@@ -143,20 +156,30 @@ let stat_command args =
   in List.iter stat_mbox args
 
 let backup_command () =
-  Database.dump (Database.read_full !database_name) stdout
+  Database.dump (Database.read_full !Config.database_name) stdout
 
 let restore_command () =
-  Database.write_full !database_name (Database.restore stdin)
+  Database.write_full !Config.database_name (Database.restore stdin)
 
 let rec parse_args_1 = function
-  | "-f" :: file :: rem ->
-      database_name := file; parse_args_2 rem
-  | "-f" :: [] ->
-      raise(Usage("Option -f requires an argument"))
+    "-config" :: file :: rem ->
+      parse_config_file file; parse_args_2 rem
+  | "-config" :: [] ->
+      raise(Usage("Option -config requires an argument"))
   | rem ->
+      if Sys.file_exists default_config_name
+      then parse_config_file default_config_name;
       parse_args_2 rem
 
 and parse_args_2 = function
+  | "-f" :: file :: rem ->
+      Config.database_name := file; parse_args_3 rem
+  | "-f" :: [] ->
+      raise(Usage("Option -f requires an argument"))
+  | rem ->
+      parse_args_3 rem
+
+and parse_args_3 = function
     "mark" :: rem ->
       mark_command rem
   | "add" :: rem ->
@@ -178,15 +201,13 @@ and parse_args_2 = function
 
 let usage_string = "\
 Usage:
-  spamoracle [-f db] mark {mailbox}*
+  spamoracle [-config conf] [-f db] mark {mailbox}*
   Add 'X-Spam:' headers to messages with result of analysis
-    -f <db>      Database to use (default $HOME/.spamoracle.db)
-    {mailbox}*   Mailboxes containing messages to markup
+    {mailbox}*   Mailboxes containing messages to analyze and mark
                  If none given, read single msg from standard input
 
-  spamoracle [-f db] add [-v] -spam {spambox}* -good {goodbox}*
+  spamoracle [-config conf] [-f db] add [-v] -spam {spambox}* -good {goodbox}*
   Create or update database with known spam or non-spam messages
-    -f <db>      Database to use (default $HOME/.spamoracle.db)
     -v           Print progress bar
     -spam        Indicate subsequent mailboxes contain spam
     -good        Indicate subsequent mailboxes contain good msgs (not spam)
@@ -194,27 +215,29 @@ Usage:
     {goodbox}*   Mailboxes containing good messages (not spam)
                  If no mailbox given, read single msg from standard input
 
-  spamoracle [-f db] test [-min prob] [-max prob] {mailbox}*
+  spamoracle [-config conf] [-f db] test [-min prob] [-max prob] {mailbox}*
   Analyze messages and print summary of results for each message
-    -f <db>      Database to use (default $HOME/.spamoracle.db)
     -min <prob>  Don't print messages with result below <prob>   
     -max <prob>  Don't print messages with result above <prob>   
     {mailbox}*   Mailboxes containing messages to analyze
 
-  spamoracle [-f db] stat {mailbox}*
+  spamoracle [-config conf] [-f db] stat {mailbox}*
   Analyze messages and print percentages of spam/non-spam for each mailbox
     {mailbox}*   Mailboxes containing messages to analyze
 
-  spamoracle [-f db] list {regexp}*
+  spamoracle [-config conf] [-f db] list {regexp}*
   Dump word statistics in database
-    -f <db>      Database to use (default $HOME/.spamoracle.db)
     {regexp}*    Regular expressions for words we are interested in
 
-  spamoracle [-f db] backup > database.backup
+  spamoracle [-config conf] [-f db] backup > database.backup
   Dump whole database in portable text format on standard output
 
-  spamoracle [-f db] restore < database.backup
-  Restore database from text backup file read from standard input"
+  spamoracle [-config conf] [-f db] restore < database.backup
+  Restore database from text backup file read from standard input
+
+  Common options:
+    -config <conf> Configuration file (default $HOME/.spamoracle.conf)
+    -f <db>        Database to use (default $HOME/.spamoracle.db)"
 
 let main () =
   try

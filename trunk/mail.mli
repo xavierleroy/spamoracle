@@ -39,3 +39,10 @@ val header: string -> message -> string
 val iter_text_parts: (message -> unit) -> message -> unit
   (** [iter_text_parts fn msg] applies [fn] to every (sub-)message 
       contained in [msg] that is of type text. *)
+
+val iter_message: (string -> unit) -> message -> unit
+  (** [iter_message fn msg] applies [fn] to the following parts of
+      message [msg]:
+      - the headers that match [!Config.mail_headers];
+      - the body of every sub-message of [msg] that is of type text.
+    *)

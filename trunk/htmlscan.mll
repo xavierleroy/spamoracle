@@ -85,31 +85,19 @@ module Output = struct
   let string ob s =
     Buffer.add_string ob.txt s
 
-  let tag ob t =
-    if StringSet.mem t word_breaking_tags then char ob ' '
-
   let add_extra ob s =
     Buffer.add_string ob.extra s; Buffer.add_char ob.extra '\n'
 
+  let tag ob t =
+    if StringSet.mem t word_breaking_tags then char ob ' ';
+    if !Config.html_add_tags then add_extra ob t
+
   let tag_attr ob t n s =
-    match t with
-      "a" ->
-        begin match String.lowercase n with
-          "href" -> add_extra ob (decode_url s)
-        | _ -> ()
-        end
-    | "img" ->
-        begin match String.lowercase n with
-          "src" -> add_extra ob (decode_url s)
-        | "alt" -> add_extra ob s
-        | _ -> ()
-        end
-    | "font" ->
-        begin match String.lowercase n with
-          "face" | "color" -> add_extra ob s
-        | _ -> ()
-        end
-    | _ -> ()     
+    let n = String.lowercase n in
+    if Str.string_match !Config.html_tag_attr (t ^ "/" ^ n) 0 then
+      if n = "href" || n = "src"
+      then add_extra ob (decode_url s)
+      else add_extra ob s
 end
 
 let ob = Output.create()
