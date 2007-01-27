@@ -43,6 +43,8 @@ let referenced_header = ref "X-Referenced-Hosts"
 
 let reassemble_words = ref false
 
+let external_converter = ref ""
+
 open Configfile
 
 let options = [
@@ -66,6 +68,7 @@ let options = [
   "robinson_s", Float robinson_s;
   "robinson_x", Float robinson_x;
   "use_chi_square", Bool use_chi_square;
-  "reassemble_words", Bool reassemble_words
+  "reassemble_words", Bool reassemble_words;
+  "external_converter", String external_converter
 ]
 
