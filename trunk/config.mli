@@ -60,5 +60,12 @@ val referenced_header : string ref
 
 val reassemble_words : bool ref
 
+val external_converter : string ref
+  (** Program to be called on message parts that are not text.
+      The program receives the content-type as first argument
+      and the actual data on standard input.
+      It should output the corresponding text on standard output,
+      or exit with non-zero error code if it cannot extract text. *)
+
 val options : (string * Configfile.value) list
   (** List of configurable parameters *)

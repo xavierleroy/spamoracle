@@ -169,6 +169,32 @@ let rec parse_message s =
       body = s;
       parts = [] }
 
+let safe_remove fname = try Sys.remove fname with Sys_error _ -> ()
+
+let run_body_through_external_converter cmd arg body =
+  let infile = Filename.temp_file "spamoracle" ".data" in
+  let outfile = Filename.temp_file "spamoracle" ".txt" in
+  let oc = open_out_bin infile in
+  let ic = open_in_bin outfile in
+  output_string oc body;
+  close_out oc;
+  let retcode =
+    Sys.command
+      (Printf.sprintf "%s %s < %s > %s" 
+                      cmd (Filename.quote arg) infile outfile) in
+  if retcode <> 0 then begin
+    close_in ic;
+    safe_remove infile; safe_remove outfile;
+    None
+  end else begin
+    let len = in_channel_length ic in
+    let res = String.create len in
+    really_input ic res 0 len;
+    close_in ic;
+    safe_remove infile; safe_remove outfile;
+    Some res
+  end
+
 let header s msg =
   let rec hdr = function
     [] -> []
@@ -191,6 +217,8 @@ let re_content_alternative =
   Str.regexp_case_fold "multipart/alternative"
 let re_content_multipart =
   Str.regexp_case_fold "multipart/"
+let re_content_any_text =
+  Str.regexp_case_fold "text/"
 
 let rec iter_text_parts fn m =
   if header_matches "content-type:" re_content_text m 
@@ -211,7 +239,16 @@ let rec iter_text_parts fn m =
     List.iter (iter_text_parts fn) m.parts
   end else if header_matches "content-type:" re_content_message_rfc822 m then
     iter_text_parts fn (parse_message m.body)
-  else
+  else if !Config.external_converter <> ""
+       && not (header_matches "content-type:" re_content_any_text m)
+       then begin
+    match run_body_through_external_converter
+              !Config.external_converter
+              (header "content-type:" m)
+              m.body with
+    | None -> ()
+    | Some txt -> fn {m with body = txt}
+  end else
     ()
 
 let iter_message fn msg =
