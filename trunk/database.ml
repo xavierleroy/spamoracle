@@ -29,12 +29,18 @@ type full = {
   f_low_freq: (string, int * int) Hashtbl.t
 }
 
-let magic = "Mailscrubber0001"
+let magic = "Mailscrubber"  (* + 4 digits for version number *)
 
 let check_magic filename ic =
-  let buf = String.create (String.length magic) in
-  really_input ic buf 0 (String.length magic);
-  if buf <> magic then raise(Error(filename ^ ": bad magic number"))
+  let mlen = String.length magic in
+  let buf = String.create (mlen + 4) in
+  really_input ic buf 0 (mlen + 4);
+  if String.sub buf 0 mlen <> magic then
+    raise(Error(filename ^ ": bad magic number"));
+  try
+    int_of_string (String.sub buf mlen 4)
+  with Failure _ ->
+    raise(Error(filename ^ ": bad magic number"));
 
 type db_chan = {zipped : bool ; ic : in_channel}
 
@@ -51,28 +57,43 @@ let close_db {zipped = zipped ; ic = ic } =
   then ignore(Unix.close_process_in ic)
   else close_in ic
 
-let marshal_from_channel filename ic =
+let current_version =
+  if Sys.ocaml_version < "4.03" then 1
+  else 2
+
+let read_hashtbl filename ic version =
   try
-    Marshal.from_channel ic
+    let tbl : ('a, 'b) Hashtbl.t = Marshal.from_channel ic in
+    if version = current_version then tbl
+    else if version > current_version then
+      raise (Error(filename ^ ": database version not supported"))
+    else begin
+      Printf.eprintf "%s: converting from version %d to version %d\n\
+                      Run 'spamoracle upgrade' to suppress this warning.\n%!"
+                     filename version current_version;
+      let tbl' = Hashtbl.create (Hashtbl.length tbl / 3) in
+      Hashtbl.iter (fun k d -> Hashtbl.add tbl' k d) tbl;
+      tbl'
+    end
   with Failure _ ->
     raise (Error(filename ^ ": database is corrupted"))
 
 let read_short filename =
   let {ic=ic ; zipped=zipped} as db_ic = open_db filename in
-  check_magic filename ic;
+  let version = check_magic filename ic in
   let ng = input_binary_int ic in
   let ns = input_binary_int ic in
-  let freq = marshal_from_channel filename ic in
+  let freq = read_hashtbl filename ic version in
   close_db db_ic;
   { s_num_good = ng; s_num_spam = ns; s_freq = freq }
 
 let read_full filename =
   let {ic=ic ; zipped=zipped} as db_ic = open_db filename in
-  check_magic filename ic;
+  let version = check_magic filename ic in
   let ng = input_binary_int ic in
   let ns = input_binary_int ic in
-  let high_freq = marshal_from_channel filename ic in
-  let low_freq = marshal_from_channel filename ic in
+  let high_freq = read_hashtbl filename ic version in
+  let low_freq = read_hashtbl filename ic version in
   close_db db_ic;
   { f_num_good = ng; f_num_spam = ns; 
     f_low_freq = low_freq; f_high_freq = high_freq }
@@ -97,7 +118,7 @@ let write_full filename db =
     else
       filename, false in
   let (tempname, oc) = temp_file (basename ^ ".tmp") in
-  output_string oc magic;
+  Printf.fprintf oc "%s%04d" magic current_version;
   output_binary_int oc db.f_num_good;
   output_binary_int oc db.f_num_spam;
   Marshal.to_channel oc db.f_high_freq [Marshal.No_sharing];

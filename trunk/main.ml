@@ -170,6 +170,13 @@ let backup_command () =
 let restore_command () =
   Database.write_full !Config.database_name (Database.restore stdin)
 
+let upgrade_command () =
+  let db = Database.read_full !Config.database_name in
+  Database.write_full !Config.database_name db;
+  printf "Converted %s to version %d.\n"
+         !Config.database_name
+         Database.current_version
+
 let rec parse_args_1 = function
     "-config" :: file :: rem ->
       parse_config_file file; parse_args_2 rem
@@ -205,6 +212,8 @@ and parse_args_3 = function
       restore_command ()
   | "words" :: rem ->
       words_command rem
+  | "upgrade" :: rem ->
+      upgrade_command ()
   | s :: rem ->
       raise(Usage("Unknown command " ^ s))
   | [] ->
@@ -245,6 +254,9 @@ Usage:
 
   spamoracle [-config conf] [-f db] restore < database.backup
   Restore database from text backup file read from standard input
+
+  spamoracle [-config conf] [-f db] upgrade
+  Convert database to the latest format
 
   spamoracle [-config conf] [-f db] words {mailbox}*
   Extract words from messages and print them

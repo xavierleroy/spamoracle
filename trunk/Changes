@@ -1,3 +1,8 @@
+Release 1.5:
+- Be resilient to changes in OCaml's hash table implementation.
+- Added command "spamoracle upgrade" to convert the database to
+  the current hash table format.
+
 Release 1.4:
 - More lenient rule for ignoring HTML comments.
 - Recognition of S P A C E D  O-U-T words.
