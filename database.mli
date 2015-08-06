@@ -37,5 +37,6 @@ val dump: full -> out_channel -> unit
 val restore: in_channel -> full
 val in_short: short -> string -> bool
 val in_full: full -> string -> bool
+val current_version: int
 
 exception Error of string
