@@ -82,6 +82,13 @@ spamoracle \- a spam classification tool
 .IR conf ]
 .RB [ \-f
 .IR database ]
+.B upgrade
+
+.B spamoracle
+.RB [ \-config
+.IR conf ]
+.RB [ \-f
+.IR database ]
 .B words
 [
 .I mailbox ...
@@ -512,7 +519,7 @@ spamoracle list 'linux.*'
 .RE
 .fi
 
-.SH "DATABASE BACKUPS"
+.SH "DATABASE BACKUPS AND UPGRADES"
 
 The database used by SpamOracle is stored in a compact, binary format that
 is not human-readable.  Moreover, this format is subject to change in later
@@ -543,6 +550,12 @@ spamoracle restore < backupfile
 .LP
 .RE
 .fi
+
+Alternatively, the
+.B "spamoracle upgrade"
+command converts a database created with an earlier version of
+SpamOracle to the native database format of the current version of
+SpamOracle.  
 
 .SH "CONFIGURING FILTERING PARAMETERS"
 
@@ -673,7 +686,7 @@ Xavier Leroy <Xavier.Leroy@inria.fr>
 .BR procmail (1);
 .BR fetchmail (1)
 
-.B http://cristal.inria.fr/~xleroy/software/
+.B http://spamoracle.forge.ocamlcore.org/
 (SpamOracle distribution site)
 
 .B http://www.paulgraham.com/spam.html
