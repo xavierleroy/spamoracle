@@ -30,7 +30,7 @@ let base64_decode_char c =
 
 let decode_base64 s =
   let d = Buffer.create (String.length s * 3 / 4) in
-  let buf = Array.create 4 0 in
+  let buf = Array.make 4 0 in
   let pos = ref 0 in
   for i = 0 to String.length s - 1 do
     let n = base64_decode_char s.[i] in
