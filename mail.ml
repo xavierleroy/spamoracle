@@ -188,8 +188,7 @@ let run_body_through_external_converter cmd arg body =
     None
   end else begin
     let len = in_channel_length ic in
-    let res = String.create len in
-    really_input ic res 0 len;
+    let res = really_input_string ic len in
     close_in ic;
     safe_remove infile; safe_remove outfile;
     Some res

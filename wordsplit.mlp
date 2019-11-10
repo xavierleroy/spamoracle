@@ -40,9 +40,7 @@ aaaaaaeceeeeiiii\
 ðnooooo÷ouuuuypy"
 
 let normalize s =
-  for i = 0 to String.length s - 1 do
-    s.[i] <- tbl.[Char.code s.[i]]
-  done
+  String.map (fun c -> tbl.[Char.code c]) s
 
 (* Check if a string is all uppercase characters *)
 
@@ -67,7 +65,7 @@ let adjust s n =
 
 (* Reassembly of stretched-out words *)
 
-let reassembly_buffer = String.create maxlen
+let reassembly_buffer = Bytes.create maxlen
 
 let previous_words = ref ([] : string list)
 
@@ -78,8 +76,8 @@ let reassemble db action word =
       let l = String.length hd in
       let idx = idx - l in
       if idx < 0 then [] else begin
-        String.blit hd 0 reassembly_buffer idx l;
-        let w = String.sub reassembly_buffer idx (maxlen - idx) in
+        Bytes.blit_string hd 0 reassembly_buffer idx l;
+        let w = Bytes.sub_string reassembly_buffer idx (maxlen - idx) in
         if db w then action w;
         hd :: reass idx tl
       end in
@@ -88,7 +86,7 @@ let reassemble db action word =
     previous_words := []
   end else begin
     let idx = maxlen - l in
-    String.blit word 0 reassembly_buffer idx l;
+    Bytes.blit_string word 0 reassembly_buffer idx l;
     previous_words := word :: reass idx !previous_words
   end
 
@@ -150,14 +148,14 @@ rule split = parse
           let s = Lexing.lexeme lexbuf in
           let l = String.length s in
           if l >= 3 && all_uppercase s then action ("U" ^ string_of_int l);
-          normalize s;
+          let s = normalize s in
           if !Config.reassemble_words then reassemble db action s;
           if l >= 3 && l <= maxlen then action s;
           split lexbuf db action }
   | numeric numeric numeric numeric *
       { fun db action ->
           let s = Lexing.lexeme lexbuf in
-          if String.length s <= 8 then (normalize s; action s);
+          if String.length s <= 8 then action (normalize s);
           split lexbuf db action }
 #ifdef JAPANESE
   | jis_in

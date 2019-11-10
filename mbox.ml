@@ -83,11 +83,11 @@ let mbox_channel_iter inchan fn =
 
 let read_single_msg inchan =
   let res = Buffer.create 10000 in
-  let buf = String.create 1024 in
+  let buf = Bytes.create 1024 in
   let rec read () =
-    let n = input inchan buf 0 (String.length buf) in
+    let n = input inchan buf 0 (Bytes.length buf) in
     if n > 0 then begin
-      Buffer.add_substring res buf 0 n;
+      Buffer.add_subbytes res buf 0 n;
       read ()
     end in
   read ();

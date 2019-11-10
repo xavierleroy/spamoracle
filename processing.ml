@@ -28,7 +28,7 @@ let mark_message db txt =
   let r = rank_message db m in
   try
     let pos_sep = Str.search_forward re_nl_nl txt 0 in
-    output stdout txt 0 pos_sep;
+    output_substring stdout txt 0 pos_sep;
     let verdict =
       if r.spam_prob <= !Config.good_mail_prob
       && r.num_meaningful >= !Config.min_meaningful_words then "no"
@@ -47,7 +47,7 @@ let mark_message db txt =
       if refh <> "" then
         printf "\n%s: %s" !Config.referenced_header refh;
     end;
-    output stdout txt pos_sep (String.length txt - pos_sep)
+    output_substring stdout txt pos_sep (String.length txt - pos_sep)
   with Not_found ->
     print_string txt
 

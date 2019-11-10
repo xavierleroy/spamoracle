@@ -1,3 +1,5 @@
+- Adapt to immutable strings, using mutable byte arrays where needed.
+
 Release 1.5:
 - Be resilient to changes in OCaml's hash table implementation.
 - Added command "spamoracle upgrade" to convert the database to

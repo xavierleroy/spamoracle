@@ -33,8 +33,7 @@ let magic = "Mailscrubber"  (* + 4 digits for version number *)
 
 let check_magic filename ic =
   let mlen = String.length magic in
-  let buf = String.create (mlen + 4) in
-  really_input ic buf 0 (mlen + 4);
+  let buf = really_input_string ic (mlen + 4) in
   if String.sub buf 0 mlen <> magic then
     raise(Error(filename ^ ": bad magic number"));
   try
