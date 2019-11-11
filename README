@@ -1,6 +1,6 @@
                SpamOracle -- a spam classification tool
 
-                        Version 1.3
+                        Version 1.6
 
 OVERVIEW:
 
@@ -34,7 +34,7 @@ LICENSE:
 
 REQUIREMENTS AND LIMITATIONS:
 
-- To compile: Objective Caml, http://caml.inria.fr/
+- To compile: Objective Caml, https://ocaml.org/, version 4.02 or later.
 
 - To use: 
 
@@ -139,7 +139,7 @@ INITIALIZATION:
   attachments for this message.  Here, we have one attachment of type
   "application/octect-stream", file name "Guangwen4.zip", and
   character set "GB2312".  The latter is an encoding for Chinese
-  and a sure sign that this is a Chinese spam
+  and a solid hint that this is a Chinese spam
   (assuming that, like me, you can't read Chinese).
 
   Normally, when running "spamoracle test goodmails", most messages
