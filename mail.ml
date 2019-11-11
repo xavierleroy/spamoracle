@@ -119,7 +119,7 @@ let parse_header s =
     [] -> List.rev accu
   | line :: rem ->
       if Str.string_match re_field line 0 then begin
-        let field_name = String.lowercase (Str.matched_group 1 line)
+        let field_name = String.lowercase_ascii (Str.matched_group 1 line)
         and field_val  = Str.matched_group 2 line in
         parse_field ((field_name, decode_header field_val) :: accu) rem
       end else

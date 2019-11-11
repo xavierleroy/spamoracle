@@ -93,7 +93,7 @@ module Output = struct
     if !Config.html_add_tags then add_extra ob t
 
   let tag_attr ob t n s =
-    let n = String.lowercase n in
+    let n = String.lowercase_ascii n in
     if Str.string_match !Config.html_tag_attr (t ^ "/" ^ n) 0 then
       if n = "href" || n = "src"
       then add_extra ob (decode_url s)
@@ -117,12 +117,12 @@ rule main = parse
       { comment lexbuf; main lexbuf }
   | "<" name
       { let s = Lexing.lexeme lexbuf in
-        tag := String.lowercase(String.sub s 1 (String.length s - 1));
+        tag := String.lowercase_ascii (String.sub s 1 (String.length s - 1));
         tagbody lexbuf;
         main lexbuf }
   | "</" name
       { let s = Lexing.lexeme lexbuf in
-        tag := String.lowercase(String.sub s 2 (String.length s - 2));
+        tag := String.lowercase_ascii (String.sub s 2 (String.length s - 2));
         tagbody lexbuf;
         main lexbuf }
   | "<"                         (* tolerance *)
