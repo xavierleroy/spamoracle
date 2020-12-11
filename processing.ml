@@ -49,6 +49,7 @@ let mark_message db txt =
     end;
     output_substring stdout txt pos_sep (String.length txt - pos_sep)
   with Not_found ->
+    eprintf "spamoracle mark: ill-formed message (no header-body separation)\n";
     print_string txt
 
 (* Add messages to database *)

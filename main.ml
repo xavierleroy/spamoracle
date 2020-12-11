@@ -275,9 +275,11 @@ let main () =
       eprintf "%s\n%s\n" msg usage_string;
       exit 2
   | Sys_error msg ->
-      eprintf "System error: %s\n" msg
+      eprintf "System error: %s\n" msg;
+      exit 2
   | Database.Error msg ->
-      eprintf "%s\n" msg
+      eprintf "%s\n" msg;
+      exit 2
 
 let _ = main()
 
