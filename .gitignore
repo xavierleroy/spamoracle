@@ -1,0 +1,7 @@
+*.cm[iox]
+*.o
+spamoracle
+htmlscan.ml
+wordsplit.ml
+wordsplit.mll
+*~
