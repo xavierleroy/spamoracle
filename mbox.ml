@@ -38,6 +38,13 @@ let open_mbox_channel ic =
       start = "";
       buf = Buffer.create 50000 }
 
+let re_crlf = Str.regexp "\r+\n"
+
+let normalize_eol s =
+  match String.index s '\r' with
+  | exception Not_found -> s
+  | _ -> Str.global_replace re_crlf "\n" s
+
 let read_msg t =
   Buffer.clear t.buf;
   Buffer.add_string t.buf t.start;
@@ -47,7 +54,7 @@ let read_msg t =
     && String.sub line 0 5 = "From "
     && Buffer.length t.buf > 0 then begin
       t.start <- (line ^ "\n");
-      Buffer.contents t.buf
+      normalize_eol (Buffer.contents t.buf)
     end else begin
       Buffer.add_string t.buf line;
       Buffer.add_char t.buf '\n';
@@ -58,7 +65,7 @@ let read_msg t =
   with End_of_file ->
     if Buffer.length t.buf > 0 then begin
       t.start <- "";
-      Buffer.contents t.buf
+      normalize_eol (Buffer.contents t.buf)
     end else
       raise End_of_file
 
@@ -91,4 +98,4 @@ let read_single_msg inchan =
       read ()
     end in
   read ();
-  Buffer.contents res
+  normalize_eol (Buffer.contents res)

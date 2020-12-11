@@ -1,3 +1,5 @@
+- Issue #2: correctly handle mails with CR-LF end-of-lines.
+
 Release 1.6:
 - Adapt to safe strings, using mutable byte arrays where needed.
 
