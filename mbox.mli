@@ -35,5 +35,14 @@ val mbox_channel_iter: in_channel -> (string -> unit) -> unit
   (** [mbox_channel_iter ic fn] reads messages from the input channel
       [ic], and applies [fn] in turn to each message. *)
 
+val maildir_iter: string -> (string -> unit) -> unit
+  (** [maildir_iter dirname fn] reads messages from the maildir
+      [<dirname>/cur], and applies [fn] in turn to each message. *)
+
+val mbox_iter: string -> (string -> unit) -> unit
+  (** [mbox_iter name fn] runs {!maildir_iter} if [name] is a Maildir
+      format directory (i.e. [<name>/cur] is a directory), and
+      otherwise opens [name] as an mbox-format file. *)
+
 val read_single_msg: in_channel -> string
   (** Read one message from the given channel, up to end of file *)

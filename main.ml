@@ -41,7 +41,7 @@ let mark_command args =
   if args = [] then
     mark_message db (read_single_msg stdin)
   else
-    List.iter (fun f -> mbox_file_iter f (mark_message db)) args
+    List.iter (fun f -> mbox_iter f (mark_message db)) args
 
 let add_command args =
   let db =
@@ -60,7 +60,7 @@ let add_command args =
     | "-good" :: rem ->
         is_spam := false; parse_args rem
     | f :: rem ->
-        mbox_file_iter f (add_message db !verbose !is_spam);
+        mbox_iter f (add_message db !verbose !is_spam);
         processed := true;
         parse_args rem
     | [] ->
@@ -122,7 +122,7 @@ let test_command args =
     | "-max" :: [] ->
         raise(Usage("no argument to -max"))
     | f :: rem ->
-        mbox_file_iter f (test_message db !low !high f);
+        mbox_iter f (test_message db !low !high f);
         parse_args rem
     | [] -> ()
   in parse_args args
@@ -134,7 +134,7 @@ let stat_command args =
     and num_good = ref 0
     and num_spam = ref 0
     and num_unknown = ref 0 in
-    mbox_file_iter f
+    mbox_iter f
       (fun s ->
         incr num_msgs;
         match stat_message db s with
@@ -158,7 +158,7 @@ let words_command args =
   else
     List.iter
       (fun f ->
-        mbox_file_iter f
+        mbox_iter f
           (fun msg ->
             print_string "----------------------------------------\n";
             wordsplit_message db msg))
