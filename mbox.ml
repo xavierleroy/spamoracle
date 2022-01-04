@@ -99,3 +99,28 @@ let read_single_msg inchan =
     end in
   read ();
   normalize_eol (Buffer.contents res)
+
+let maildir_iter dirname fn =
+  let dir = Filename.concat dirname "cur" in
+  let dh = Unix.opendir dir in
+  try
+    while true do
+      let f = Unix.readdir dh in
+      if f <> "." && f <> ".." then begin
+        try
+          let ic = open_mbox_file (Filename.concat dir f) in
+          fn (read_msg ic); (* maildir contains one mail per file *)
+          close_mbox ic;
+        with Sys_error _ -> ()
+        (* maildir file might concurrently disappear *)
+      end
+    done
+  with End_of_file ->
+   Unix.closedir dh
+
+let mbox_iter name fn =
+  let dir = Filename.concat name "cur" in
+  if Sys.file_exists dir && Sys.is_directory dir then
+    maildir_iter name fn
+  else
+    mbox_file_iter name fn
